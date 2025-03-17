@@ -1,22 +1,63 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Signup from './pages/Signup/Signup'
-import Login from './pages/Login/Login'
-import Home from './pages/Home/Home'
-import LandingPage from './pages/Home/LandingPage'
-import './App.css'
+import React, { lazy, Suspense } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import SkeletonLoader from "./components/ui/SkeltonLoader";
+import LandingPage from "./pages/Home/LandingPage";
+import { ProjectProvider } from "./context/ProjectContext";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { TaskProvider } from "./context/TaskContext";
+import TaskList from "./pages/Tasks/TaskList";
+
+// Lazy-loaded components
+// const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Auth/Login"));
+const Signup = lazy(() => import("./pages/Auth/Signup"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+// Simulated authentication check
+const isAuthenticated = () => {
+  return localStorage.getItem("token") ? true : false;
+};
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  return isAuthenticated() ? children : <Navigate to="/login" />;
+};
+
 const App = () => {
   return (
-    <div className=''>
-      <BrowserRouter>
-        <Routes>
-          <Route path='/' element={<LandingPage />} />
-          <Route path='/home' element={<Home />} />
-          <Route path='/login' element={<Login />} />
-          <Route path='/signup' element={<Signup />} />
-        </Routes>
-      </BrowserRouter>
-    </div>
-  )
-}
+    <AuthProvider>
+      <ProjectProvider>
+        <TaskProvider>
+          <Router>
+            <Suspense fallback={<SkeletonLoader />}>
+              <Routes>
+                <Route path="/" element={<LandingPage/> }/>
+                <Route path="/tasks" element={<TaskList />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </Router>
+        </TaskProvider>
+      </ProjectProvider>
+    </AuthProvider>
+  );
+};
 
-export default App
+export default App;

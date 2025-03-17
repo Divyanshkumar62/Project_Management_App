@@ -1,11 +1,10 @@
 import React from 'react'
-import Dashboard from './Dashboard'
+import Dashboard from '../Dashboard'
 
 const Home = () => {
   return (
     <div>
-      {/* <Dashboard /> */}
-      <h1>Home</h1>
+      <Dashboard />
     </div>
   )
 }
