@@ -15,15 +15,15 @@ const ProjectCard = ({ project }) => {
   const [projectTasks, setProjectTasks] = useState([]);
   const menuRef = useRef(null);
 
-   useEffect(() => {
-     const handleClickOutside = (event) => {
-       if (menuRef.current && !menuRef.current.contains(event.target)) {
-         setIsMenuOpen(false);
-       }
-     };
-     document.addEventListener("mousedown", handleClickOutside);
-     return () => document.removeEventListener("mousedown", handleClickOutside);
-   }, []);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -39,6 +39,10 @@ const ProjectCard = ({ project }) => {
     };
     loadTasks();
   }, [project._id]);
+
+  const handleAddTask = () => {
+    setIsTaskModalOpen(true);
+  };
 
   return (
     <div ref={menuRef} className="bg-white p-4 shadow rounded relative">
@@ -61,7 +65,7 @@ const ProjectCard = ({ project }) => {
               </button>
               <button
                 className="block w-full text-left px-3 py-2 hover:bg-gray-100"
-                onClick={() => setIsTaskModalOpen(true)}
+                onClick={handleAddTask}
               >
                 Create Task
               </button>

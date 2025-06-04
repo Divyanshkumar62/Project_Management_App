@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import SkeletonTask from "../../components/ui/SkeltonTask";
 import { TaskContext } from "../../context/TaskContext";
+import { ProjectContext } from "../../context/ProjectContext";
 
 // Lazy load components
 const CreateTaskModal = lazy(() =>
@@ -13,6 +14,7 @@ const TaskCard = lazy(() => import("../../components/task/TaskCard"));
 
 const ProjectDetails = () => {
   const { projectId } = useParams();
+  const { projects } = useContext(ProjectContext);
   const {
     tasks,
     isLoading,
@@ -23,15 +25,16 @@ const ProjectDetails = () => {
   } = useContext(TaskContext);
   const queryClient = useQueryClient();
   const [localTasks, setLocalTasks] = useState([]);
+  const [project, setProject] = useState(null);
 
-  // ✅ Ensure tasks are fetched on mount
   useEffect(() => {
-    queryClient.invalidateQueries(["tasks"]); // ✅ Forces task refetch
-  }, [projectId, queryClient]);
+    const currentProject = projects.find((p) => p._id === projectId);
+    setProject(currentProject);
+    queryClient.invalidateQueries(["tasks"]);
+  }, [projectId, projects, queryClient]);
 
   useEffect(() => {
     if (!tasks) {
-      console.log("Empty...");
       setLocalTasks([]);
     } else if (tasks[projectId]) {
       setLocalTasks(tasks[projectId]);
@@ -49,8 +52,14 @@ const ProjectDetails = () => {
     updateTaskOrder(projectId, reorderedTasks);
   };
 
+  if (!project) {
+    return <div>Loading project details...</div>;
+  }
+
   return (
     <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">{project.title}</h1>
+      <p>{project.description}</p>
       {isLoading ? (
         <div>
           {[...Array(5)].map((_, index) => (
