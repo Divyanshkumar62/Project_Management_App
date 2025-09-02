@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { AuthContext } from "./AuthContext";
 import {
   fetchInvitations,
@@ -7,55 +7,70 @@ import {
   declineInvitation,
 } from "../services/invitationService";
 
-export const InvitationContext = createContext();
+const InvitationContext = createContext();
+
+export const useInvitations = () => {
+  const context = useContext(InvitationContext);
+  if (!context) {
+    throw new Error("useInvitations must be used within InvitationProvider");
+  }
+  return context;
+};
 
 export const InvitationProvider = ({ children }) => {
   const { auth } = useContext(AuthContext);
   const [invitations, setInvitations] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const loadInvitations = async () => {
+  const loadInvitations = async (projectId) => {
+    if (!auth?.token) return;
+    
+    setLoading(true);
     try {
-      setLoading(true);
-      const data = await fetchInvitations(auth.token);
-      setInvitations(data);
+      const data = await fetchInvitations(projectId);
+      setInvitations(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error("Error fetching invitations:", err);
+      console.error("Error loading invitations:", err);
+      setInvitations([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (auth.token) {
-      loadInvitations();
-    }
-  }, [auth.token]);
-
-  const sendNewInvitation = async (invitationData) => {
+  const sendNewInvitation = async (projectId, invitationData) => {
     try {
-      const newInvitation = await sendInvitation(auth.token, invitationData);
+      const newInvitation = await sendInvitation(projectId, invitationData);
       setInvitations([...invitations, newInvitation]);
+      return { success: true };
     } catch (err) {
       console.error("Error sending invitation:", err);
+      return { success: false, error: err.message };
     }
   };
 
-  const acceptInvitationById = async (invitationId) => {
+  const acceptProjectInvitation = async (projectId, invitationId) => {
     try {
-      await acceptInvitation(auth.token, invitationId);
-      setInvitations(invitations.filter((inv) => inv._id !== invitationId));
+      await acceptInvitation(projectId, invitationId);
+      setInvitations(
+        invitations.filter((inv) => inv._id !== invitationId)
+      );
+      return { success: true };
     } catch (err) {
       console.error("Error accepting invitation:", err);
+      return { success: false, error: err.message };
     }
   };
 
-  const declineInvitationById = async (invitationId) => {
+  const declineProjectInvitation = async (projectId, invitationId) => {
     try {
-      await declineInvitation(auth.token, invitationId);
-      setInvitations(invitations.filter((inv) => inv._id !== invitationId));
+      await declineInvitation(projectId, invitationId);
+      setInvitations(
+        invitations.filter((inv) => inv._id !== invitationId)
+      );
+      return { success: true };
     } catch (err) {
       console.error("Error declining invitation:", err);
+      return { success: false, error: err.message };
     }
   };
 
@@ -64,12 +79,15 @@ export const InvitationProvider = ({ children }) => {
       value={{
         invitations,
         loading,
+        loadInvitations,
         sendNewInvitation,
-        acceptInvitationById,
-        declineInvitationById,
+        acceptProjectInvitation,
+        declineProjectInvitation,
       }}
     >
       {children}
     </InvitationContext.Provider>
   );
 };
+
+export { InvitationContext };

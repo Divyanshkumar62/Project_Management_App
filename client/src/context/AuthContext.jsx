@@ -15,11 +15,11 @@ export const AuthProvider = ({ children }) => {
     }
   }, [auth.token]);
 
-   useEffect(() => {
-     if (!auth.token) {
-       console.warn("❌ No authentication token found. Redirecting to login.");
-     }
-   }, [auth.token]);
+  useEffect(() => {
+    if (!auth.token) {
+      console.warn("❌ No authentication token found. Redirecting to login.");
+    }
+  }, [auth.token]);
 
   const loginUser = (token, userData) => {
     localStorage.setItem("token", token);
@@ -39,3 +39,7 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+// Custom hook to use AuthContext
+import { useContext } from "react";
+export const useAuth = () => useContext(AuthContext);

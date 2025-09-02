@@ -2,10 +2,10 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { useTasks } from "../context/TaskContext";
 
 const TaskBoard = () => {
-  const { tasks, isLoading, isError } = useTasks();
+  const { userTasks, userTasksLoading, userTasksError } = useTasks();
 
-  if (isLoading) return <p>Loading tasks...</p>;
-  if (isError) return <p>Error loading tasks</p>;
+  if (userTasksLoading) return <p>Loading tasks...</p>;
+  if (userTasksError) return <p>Error loading tasks</p>;
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
@@ -16,21 +16,26 @@ const TaskBoard = () => {
     <DragDropContext onDragEnd={handleDragEnd}>
       <Droppable droppableId="tasks">
         {(provided) => (
-          <div {...provided.droppableProps} ref={provided.innerRef} className="task-container">
-            {tasks.map((task, index) => (
-              <Draggable key={task._id} draggableId={task._id} index={index}>
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    className="task-card"
-                  >
-                    {task.title}
-                  </div>
-                )}
-              </Draggable>
-            ))}
+          <div
+            {...provided.droppableProps}
+            ref={provided.innerRef}
+            className="task-container"
+          >
+            {userTasks &&
+              userTasks.map((task, index) => (
+                <Draggable key={task._id} draggableId={task._id} index={index}>
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className="task-card"
+                    >
+                      {task.title}
+                    </div>
+                  )}
+                </Draggable>
+              ))}
             {provided.placeholder}
           </div>
         )}

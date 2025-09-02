@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      lowercase: true, 
+      lowercase: true,
       trim: true,
     },
     password: {
@@ -21,12 +21,26 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["Admin", "Manager", "TeamMember"],
-      default: "TeamMember",
+      enum: ["owner", "manager", "member"],
+      default: "member",
     },
-    profilePicture: {
+    avatarUrl: {
       type: String,
       default: "",
+    },
+    bio: {
+      type: String,
+      maxlength: 500,
+      default: "",
+    },
+    timezone: {
+      type: String,
+      default: process.env.DEFAULT_TIMEZONE || "UTC",
+    },
+    notificationPrefs: {
+      emailInvites: { type: Boolean, default: true },
+      emailTaskAssigned: { type: Boolean, default: true },
+      emailMentions: { type: Boolean, default: true },
     },
   },
   { timestamps: true }

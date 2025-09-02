@@ -1,9 +1,10 @@
-import React, { useState, useContext } from "react";
-import { ProjectContext } from "../../context/ProjectContext";
+import React, { useState, useRef, useEffect } from "react";
+import { useCreateProject } from "../../hooks/useProjects";
 import { searchUsers } from "../../services/authService";
 
 const CreateProjectModal = ({ closeModal }) => {
-  const { addProject } = useContext(ProjectContext);
+  const createProjectMutation = useCreateProject();
+  const modalRef = useRef(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -12,6 +13,16 @@ const CreateProjectModal = ({ closeModal }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        closeModal();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [closeModal]);
 
   // 🔹 Fetch users when typing in the search box
   const handleSearch = async (e) => {
@@ -50,7 +61,7 @@ const CreateProjectModal = ({ closeModal }) => {
     e.preventDefault();
 
     try {
-      await addProject({
+      await createProjectMutation.mutateAsync({
         title,
         description,
         startDate,
@@ -66,8 +77,8 @@ const CreateProjectModal = ({ closeModal }) => {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-md shadow-lg w-1/3">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white p-6 rounded-md shadow-lg w-1/3" ref={modalRef}>
         <h2 className="text-xl font-bold mb-4">Create Project</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Project Title */}

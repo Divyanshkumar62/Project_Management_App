@@ -75,15 +75,20 @@ const SignupForm = () => {
         onChange={handleChange}
         placeholder={"Enter password"}
       />
-      <input
-        type="text"
+      <select
         name="role"
-        placeholder="Role"
-        className=" w-full text-md text-slate-500 bg-zinc-300 py-3 mr-3 rounded-md outline-none border-[1.5px] px-5 mb-4"
+        className="w-full text-md text-slate-500 bg-zinc-300 py-3 mr-3 rounded-md outline-none border-[1.5px] px-5 mb-4"
         value={formData.role}
         required
         onChange={handleChange}
-      />
+      >
+        <option value="" disabled>
+          Select role
+        </option>
+        <option value="manager">Manager</option>
+        <option value="member">Member</option>
+        <option value="owner">Owner</option>
+      </select>
       {error && <p className="text-red-500 text-sm pb-1">{error}</p>}
       <button
         type="submit"

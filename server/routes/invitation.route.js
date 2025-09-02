@@ -1,18 +1,27 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router({ mergeParams: true });
-const { check } = require('express-validator');
-const auth = require('../middleware/auth');
-const checkRole = require('../middleware/role')
-const { sendInvitation, getInvitations, acceptInvitation, declineInvitation } = require('../controllers/invitation.controller.js');
+const { check } = require("express-validator");
+const auth = require("../middleware/auth");
+const { requireRole } = require("../middleware/auth");
+const {
+  sendInvitation,
+  getInvitations,
+  acceptInvitation,
+  declineInvitation,
+} = require("../controllers/invitation.controller.js");
 
-router.post('/', [
+router.post(
+  "/",
+  [
     auth,
-    checkRole(['Admin', 'Manager']),
+    requireRole("Owner"),
     check("invitedEmail", "Please enter a valid email").isEmail(),
-], sendInvitation);
+  ],
+  sendInvitation
+);
 
-router.get('/', [ auth, checkRole(['Admin', 'Manager']) ], getInvitations);
-router.put('/:invitationId/accept', auth, acceptInvitation);
-router.put('/:invitationId/decline', auth, declineInvitation)
+router.get("/", [auth, requireRole("Owner")], getInvitations);
+router.put("/:invitationId/accept", auth, acceptInvitation);
+router.put("/:invitationId/decline", auth, declineInvitation);
 
 module.exports = router;

@@ -33,8 +33,22 @@ const taskSchema = new mongoose.Schema(
       ref: "Project",
       required: true,
     },
+    attachments: [
+      {
+        filename: String,
+        url: String,
+        uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );
 
+// Indexes for performance
+taskSchema.index({ status: 1 });
+taskSchema.index({ priority: 1 });
+taskSchema.index({ assignedTo: 1 });
+taskSchema.index({ project: 1 });
+taskSchema.index({ title: "text", description: "text" });
 module.exports = mongoose.model("Task", taskSchema);

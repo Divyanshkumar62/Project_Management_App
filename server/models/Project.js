@@ -26,8 +26,15 @@ const projectSchema = new mongoose.Schema(
     },
     teamMembers: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        role: {
+          type: String,
+          enum: ["Owner", "Member"],
+          default: "Member",
+        },
       },
     ],
     status: {
@@ -35,8 +42,16 @@ const projectSchema = new mongoose.Schema(
       enum: ["Active", "Completed", "Planning", "Archived"],
       default: "Planning",
     },
+    archived: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
 
+// Indexes for performance
+projectSchema.index({ title: "text", description: "text" });
+projectSchema.index({ createdBy: 1 });
+projectSchema.index({ "teamMembers.user": 1 });
 module.exports = mongoose.model("Project", projectSchema);

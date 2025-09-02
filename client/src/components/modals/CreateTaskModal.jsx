@@ -1,15 +1,17 @@
-import React, { useState, useContext, useRef, useEffect } from "react";
-import { TaskContext } from "../../context/TaskContext";
+import React, { useState, useRef, useEffect } from "react";
+import { useCreateTask } from "../../hooks/useTasks";
 import { searchUsers } from "../../services/authService";
 
 const CreateTaskModal = ({ projectId, closeModal }) => {
-  const { createTaskMutation } = useContext(TaskContext);
+  const createTaskMutation = useCreateTask();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("Medium");
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [assignedTo, setAssignedTo] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
   const modalRef = useRef(null);
 
   useEffect(() => {
@@ -29,7 +31,7 @@ const CreateTaskModal = ({ projectId, closeModal }) => {
     if (value.length > 1) {
       try {
         const results = await searchUsers(value);
-        setSearchResults(results || []); 
+        setSearchResults(results || []);
       } catch (err) {
         console.error("❌ Error searching users:", err);
       }
@@ -40,118 +42,157 @@ const CreateTaskModal = ({ projectId, closeModal }) => {
 
   const handleAssignUser = (user) => {
     setAssignedTo(user);
-    setSearchTerm(""); 
+    setSearchTerm("");
     setSearchResults([]);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!title.trim()) {
+      setMessage("Task title is required");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setMessage("");
+
     try {
       await createTaskMutation.mutateAsync({
         projectId,
-        title,
-        description,
-        priority,
-        assignedTo: assignedTo ? assignedTo._id : null,
+        taskData: {
+          title,
+          description,
+          priority,
+          assignedTo: assignedTo ? assignedTo._id : null,
+        }
       });
 
-      closeModal(); 
+      setMessage("Task created successfully!");
+      setTimeout(() => {
+        closeModal();
+      }, 1000);
     } catch (err) {
-      console.error(
-        "❌ Task Creation Failed:",
-        err.response?.data || err.message
-      );
+      setMessage(`Error: ${err.message || "Failed to create task"}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div ref={modalRef} className="bg-white p-6 rounded-md shadow-lg w-1/3">
-        <h2 className="text-xl font-bold mb-4">Create Task</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Task Title */}
-          <input
-            type="text"
-            placeholder="Task Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full border p-2 rounded"
-            required
-          />
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div
+        ref={modalRef}
+        className="bg-white p-6 rounded-md shadow-lg w-1/3 max-h-[90vh] overflow-y-auto"
+      >
+        <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
+        
+        {message && (
+          <div className={`mb-4 p-3 rounded ${
+            message.includes("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+          }`}>
+            {message}
+          </div>
+        )}
 
-          {/* Task Description */}
-          <textarea
-            placeholder="Task Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full border p-2 rounded"
-            required
-          />
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Task Title *
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter task title"
+              required
+            />
+          </div>
 
-          {/* Priority Dropdown */}
-          <select
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-            className="w-full border p-2 rounded"
-          >
-            <option value="Low">Low</option>
-            <option value="Medium">Medium</option>
-            <option value="High">High</option>
-          </select>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows="3"
+              placeholder="Enter task description"
+            />
+          </div>
 
-          {/* 🔹 Assigned User Search */}
-          <input
-            type="text"
-            placeholder="Search for User..."
-            value={searchTerm}
-            onChange={handleSearch}
-            className="w-full border p-2 rounded"
-          />
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Priority
+            </label>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
 
-          {/* 🔹 Search Results */}
-          {searchResults.length > 0 && (
-            <div className="bg-gray-100 p-2 rounded mt-2 max-h-40 overflow-y-auto">
-              {searchResults.map((user) => (
-                <div
-                  key={user._id}
-                  className="flex justify-between p-2 hover:bg-gray-200 cursor-pointer"
-                  onClick={() => handleAssignUser(user)}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Assign To
+            </label>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={handleSearch}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Search users to assign..."
+            />
+            
+            {searchResults.length > 0 && (
+              <div className="mt-2 border border-gray-300 rounded-md max-h-32 overflow-y-auto">
+                {searchResults.map((user) => (
+                  <div
+                    key={user._id}
+                    onClick={() => handleAssignUser(user)}
+                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {user.name} ({user.email})
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {assignedTo && (
+              <div className="mt-2 p-2 bg-blue-100 rounded-md">
+                Assigned to: {assignedTo.name} ({assignedTo.email})
+                <button
+                  type="button"
+                  onClick={() => setAssignedTo(null)}
+                  className="ml-2 text-red-500 hover:text-red-700"
                 >
-                  <span>{user.name}</span>
-                  <span className="text-sm text-gray-500">{user.email}</span>
-                </div>
-              ))}
-            </div>
-          )}
+                  ✕
+                </button>
+              </div>
+            )}
+          </div>
 
-          {/* 🔹 Selected User */}
-          {assignedTo && (
-            <div className="mt-3 bg-gray-200 p-2 rounded flex justify-between">
-              <span>{assignedTo.name}</span>
-              <button
-                type="button"
-                onClick={() => setAssignedTo(null)}
-                className="text-red-500 text-sm"
-              >
-                Remove
-              </button>
-            </div>
-          )}
-
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end space-x-3">
             <button
               type="button"
               onClick={closeModal}
-              className="bg-gray-500 text-white px-4 py-2 rounded-md"
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded-md"
+              disabled={isSubmitting || !title.trim()}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
             >
-              Create
+              {isSubmitting ? "Creating..." : "Create Task"}
             </button>
           </div>
         </form>

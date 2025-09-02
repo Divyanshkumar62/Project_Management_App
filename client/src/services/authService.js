@@ -1,22 +1,34 @@
-import axios from 'axios'
-
-const API_URL = 'http://localhost:5000/api'
-
-const api = axios.create({
-    baseURL: API_URL
-})
-
-export const searchUsers = async (query) => {
-  const response = await axios.get(`${API_URL}/auth/search?query=${query}`);
-  return response.data;
-};
+import api from './api';
+import { API_ENDPOINTS } from '../constants/api';
 
 export const login = async (credentials) => {
-    const response = await api.post('/auth/login', credentials)
-    return response.data; // returns token
-}
+  try {
+    const response = await api.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
+    console.log('✅ Login response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Login error:', error.response?.data || error.message);
+    throw error.response?.data || { message: error.message };
+  }
+};
 
 export const signup = async (userData) => {
-    const response = await api.post('/auth/signup', userData)
-    return response.data; // returns token
-}
+  try {
+    console.log('📝 Signup request:', userData);
+    const response = await api.post(API_ENDPOINTS.AUTH.SIGNUP, userData);
+    console.log('✅ Signup response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Signup error:', error.response?.data || error.message);
+    throw error.response?.data || { message: error.message };
+  }
+};
+
+export const searchUsers = async (query) => {
+  try {
+    const response = await api.get(`${API_ENDPOINTS.AUTH.SEARCH_USERS}?query=${query}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: error.message };
+  }
+};

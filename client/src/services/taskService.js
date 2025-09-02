@@ -1,75 +1,113 @@
-import axios from "axios";
+import api from './api';
+import { API_ENDPOINTS } from '../constants/api';
 
-const API_BASE_URL = "http://localhost:5000/api/tasks";
-
-
-export const fetchTasks = async (token, projectId) => {
-  if(token){
-    throw new Error("Unauthorized, no token found!")
+export const createTask = async (projectId, taskData) => {
+  try {
+    const response = await api.post(API_ENDPOINTS.TASKS.PROJECT_TASKS(projectId), taskData);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
   }
-  const response = await axios.get(`${API_BASE_URL}/${projectId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
- console.log(`service: `,response.data)
-  return response.data;
 };
 
-export const fetchUserTasks = async (token) => {
-  const response = await axios.get(`${API_BASE_URL}/user`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
+export const fetchTasks = async (projectId, params = {}) => {
+  try {
+    const query = new URLSearchParams(params).toString();
+    const url = query 
+      ? `${API_ENDPOINTS.TASKS.PROJECT_TASKS(projectId)}?${query}` 
+      : API_ENDPOINTS.TASKS.PROJECT_TASKS(projectId);
+    const response = await api.get(url);
+    
+    // Handle different response formats
+    return Array.isArray(response.data?.tasks) 
+      ? response.data.tasks 
+      : Array.isArray(response.data) 
+      ? response.data 
+      : [];
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
 };
 
-export const updateTaskStatus = async (token, taskId, status) => {
-  const response = await axios.put(
-    `${API_BASE_URL}/${taskId}/status`,
-    { status },
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
-  return response.data;
+export const fetchUserTasks = async (params = {}) => {
+  try {
+    const query = new URLSearchParams(params).toString();
+    const url = query 
+      ? `${API_ENDPOINTS.TASKS.USER_TASKS}?${query}` 
+      : API_ENDPOINTS.TASKS.USER_TASKS;
+    const response = await api.get(url);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
 };
 
-export const createTask = async (token, projectId, taskData) => {
-  if (!token) throw new Error("Unauthorized: No token found.");
-
-  const response = await axios.post(
-    `${API_BASE_URL}/${projectId}/tasks`,
-    {
-      title: taskData.title, // ✅ Ensure correct field names
-      description: taskData.description,
-      dueDate: taskData.dueDate || new Date().toISOString(), // ✅ Default date
-      priority: taskData.priority || "Medium", // ✅ Default priority
-      assignedTo: taskData.assignedTo || [], // ✅ Default empty array
-    },
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
-
-  return response.data;
+export const getTaskById = async (projectId, taskId) => {
+  try {
+    const response = await api.get(API_ENDPOINTS.TASKS.BY_ID(projectId, taskId));
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
 };
 
-
-export const updateTask = async (token, projectId, updatedData, taskId) => {
-  const response = await axios.put(
-    `${API_BASE_URL}/${projectId}/tasks/${taskId}`,
-    updatedData,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
-  return response.data;
+export const updateTask = async (projectId, taskId, taskData) => {
+  try {
+    const response = await api.put(API_ENDPOINTS.TASKS.BY_ID(projectId, taskId), taskData);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
 };
 
-export const removeTask = async (token, projectId, taskId) => {
-  const response = await axios.delete(
-    `${API_BASE_URL}/${projectId}/tasks/${taskId}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
-  return response.data;
+export const deleteTask = async (projectId, taskId) => {
+  try {
+    const response = await api.delete(API_ENDPOINTS.TASKS.BY_ID(projectId, taskId));
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// Alias for backward compatibility
+export const removeTask = deleteTask;
+
+export const updateTaskStatus = async (projectId, taskId, status) => {
+  try {
+    const response = await api.put(API_ENDPOINTS.TASKS.BY_ID(projectId, taskId), { status });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// Upload attachment to task
+export const uploadTaskAttachment = async (projectId, taskId, file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await api.post(
+      API_ENDPOINTS.UPLOADS.TASK_ATTACHMENT(projectId, taskId),
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// Delete attachment
+export const deleteAttachment = async (attachmentId) => {
+  try {
+    const response = await api.delete(API_ENDPOINTS.UPLOADS.DELETE_ATTACHMENT(attachmentId));
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
 };

@@ -12,7 +12,7 @@ const LoginForm = () => {
   const [error, setError] = useState("");
 
   if (auth.token) {
-    Navigate("/home");
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleChange = (e) => {
