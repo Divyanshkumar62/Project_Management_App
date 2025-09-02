@@ -81,7 +81,7 @@ const updateAvatar = async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    user.avatarUrl = `http://localhost:5001/uploads/avatars/${req.file.filename}`;
     await user.save();
     
     res.json({ avatarUrl: user.avatarUrl });

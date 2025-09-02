@@ -1,8 +1,12 @@
 import React, { useRef, useEffect } from "react";
 import { FaTimes, FaCalendar, FaUsers, FaTasks } from "react-icons/fa";
+import { useTasks } from "../../hooks/useTasks";
 
 const ProjectDetailsModal = ({ project, closeModal }) => {
   const modalRef = useRef(null);
+  
+  // Fetch tasks for this specific project
+  const { data: projectTasks = [], isLoading: tasksLoading } = useTasks(project._id);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -45,7 +49,8 @@ const ProjectDetailsModal = ({ project, closeModal }) => {
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden" ref={modalRef}>
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">{project.title}</h2>
+          <div className="w-8"></div> {/* Spacer for centering */}
+          <h2 className="text-2xl font-bold text-gray-900 text-center">{project.title}</h2>
           <button
             onClick={closeModal}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -123,12 +128,20 @@ const ProjectDetailsModal = ({ project, closeModal }) => {
           <div>
             <h3 className="text-lg font-semibold mb-3 flex items-center">
               <FaTasks className="mr-2 text-orange-500" />
-              Tasks ({project.tasks?.length || 0})
+              Tasks ({tasksLoading ? '...' : projectTasks.length})
             </h3>
-            {project.tasks && project.tasks.length > 0 ? (
+            {tasksLoading ? (
+              <div className="text-center py-8">
+                <div className="text-gray-500">Loading tasks...</div>
+              </div>
+            ) : projectTasks.length > 0 ? (
               <div className="space-y-3">
-                {project.tasks.map((task) => (
-                  <div key={task._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                {projectTasks.map((task) => (
+                  <div key={task._id} className={`border-l-4 border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow ${
+                    task.priority === 'High' ? 'border-l-red-500' :
+                    task.priority === 'Medium' ? 'border-l-yellow-500' :
+                    'border-l-green-500'
+                  }`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center mb-2">

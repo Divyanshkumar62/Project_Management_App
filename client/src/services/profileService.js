@@ -33,7 +33,7 @@ export const updateAvatar = async (file) => {
     const formData = new FormData();
     formData.append('avatar', file);
     
-    const response = await api.put(API_ENDPOINTS.USERS.AVATAR, formData, {
+    const response = await api.put('/users/me/avatar', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

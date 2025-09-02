@@ -1,31 +1,59 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import ProjectCard from "../../components/project/ProjectCard";
 import { useProjects, useDeleteProject } from "../../hooks/useProjects";
 import Sidebar from "../../components/dashboard/Sidebar";
 import { useLocation } from "react-router-dom";
+import { useDebounce } from "../../hooks/useDebounce";
 
-const DEBOUNCE_MS = 300;
-
-const ProjectList = () => {
+const ProjectList = ({ searchQuery, sortBy: propSortBy, sortOrder: propSortOrder }) => {
   const location = useLocation();
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const debounceRef = useRef();
+  const [localSearch, setLocalSearch] = useState("");
+  const [localSortBy, setLocalSortBy] = useState("createdAt");
+  const [localSortOrder, setLocalSortOrder] = useState("desc");
+  const debouncedLocalSearch = useDebounce(localSearch, 300);
   
-  const { data: projects = [], isLoading: loading, error } = useProjects({ q: debouncedSearch });
+  // Use props from dashboard or local state for direct access
+  const finalSearchQuery = searchQuery !== undefined ? searchQuery : debouncedLocalSearch;
+  const finalSortBy = propSortBy !== undefined ? propSortBy : localSortBy;
+  const finalSortOrder = propSortOrder !== undefined ? propSortOrder : localSortOrder;
+  
+  const { data: projects = [], isLoading: loading, error } = useProjects({ 
+    q: finalSearchQuery,
+    sortBy: finalSortBy,
+    sortOrder: finalSortOrder
+  });
   const deleteProjectMutation = useDeleteProject();
 
-  // Check if we're on the dashboard route (rendered inside MainContent)
   const isInDashboard = location.pathname === '/dashboard';
 
-  useEffect(() => {
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setDebouncedSearch(search);
-    }, DEBOUNCE_MS);
+  // Client-side sorting as fallback
+  const sortedProjects = [...projects].sort((a, b) => {
+    let aValue, bValue;
+    
+    switch (finalSortBy) {
+      case 'title':
+        aValue = a.title?.toLowerCase() || '';
+        bValue = b.title?.toLowerCase() || '';
+        break;
+      case 'status':
+        aValue = a.status || '';
+        bValue = b.status || '';
+        break;
+      case 'updatedAt':
+        aValue = new Date(a.updatedAt || a.createdAt);
+        bValue = new Date(b.updatedAt || b.createdAt);
+        break;
+      default: // createdAt
+        aValue = new Date(a.createdAt);
+        bValue = new Date(b.createdAt);
+    }
 
-    return () => clearTimeout(debounceRef.current);
-  }, [search]);
+    if (finalSortBy === 'title' || finalSortBy === 'status') {
+      return finalSortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+    } else {
+      return finalSortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+    }
+  });
 
   const handleDeleteProject = (projectId) => {
     if (window.confirm("Are you sure you want to delete this project?")) {
@@ -50,46 +78,81 @@ const ProjectList = () => {
   }
 
   if (isInDashboard) {
-    // Render without sidebar and search bar when inside Dashboard
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {projects.map((project) => (
-          <ProjectCard
-            key={project._id}
-            project={project}
-            onDelete={handleDeleteProject}
-            onUpdate={() => {}}
-          />
-        ))}
+        {sortedProjects.length === 0 ? (
+          <div className="col-span-full text-center py-8 text-gray-500">
+            {finalSearchQuery ? "No projects found matching your search." : "No projects yet. Create your first project!"}
+          </div>
+        ) : (
+          sortedProjects.map((project) => (
+            <ProjectCard
+              key={project._id}
+              project={project}
+              onDelete={() => handleDeleteProject(project._id)}
+              onUpdate={() => {}}
+            />
+          ))
+        )}
       </div>
     );
   }
 
-  // Render with sidebar when accessed directly
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <div className="flex-1 overflow-auto">
         <div className="p-6">
           <div className="mb-6">
-            <input
-              type="text"
-              placeholder="Search projects..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">My Projects</h1>
+            
+            {/* Search and Sort Controls */}
+            <div className="flex flex-wrap gap-4 mb-6">
+              <input
+                type="text"
+                placeholder="Search projects..."
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                className="flex-1 min-w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              
+              <select
+                value={localSortBy}
+                onChange={(e) => setLocalSortBy(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="createdAt">Date Created</option>
+                <option value="updatedAt">Last Updated</option>
+                <option value="title">Name</option>
+                <option value="status">Status</option>
+              </select>
+              
+              <select
+                value={localSortOrder}
+                onChange={(e) => setLocalSortOrder(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="desc">Newest First</option>
+                <option value="asc">Oldest First</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <ProjectCard
-                key={project._id}
-                project={project}
-                onDelete={handleDeleteProject}
-                onUpdate={() => {}}
-              />
-            ))}
+            {sortedProjects.length === 0 ? (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                {finalSearchQuery ? "No projects found matching your search." : "No projects yet. Create your first project!"}
+              </div>
+            ) : (
+              sortedProjects.map((project) => (
+                <ProjectCard
+                  key={project._id}
+                  project={project}
+                  onDelete={() => handleDeleteProject(project._id)}
+                  onUpdate={() => {}}
+                />
+              ))
+            )}
           </div>
         </div>
       </div>

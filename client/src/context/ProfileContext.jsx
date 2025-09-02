@@ -13,7 +13,7 @@ export const ProfileProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await profileService.getMe();
+      const data = await profileService.getProfile();
       setMe(data);
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to load profile");
@@ -26,7 +26,7 @@ export const ProfileProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await profileService.updateMe(payload);
+      const data = await profileService.updateProfile(payload);
       setMe(data);
       return data;
     } catch (err) {
@@ -49,6 +49,10 @@ export const ProfileProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const changePassword = async (currentPassword, newPassword) => {
+    return updatePassword({ currentPassword, newPassword });
   };
 
   const updateAvatar = async (file) => {
@@ -77,6 +81,7 @@ export const ProfileProvider = ({ children }) => {
         loadMe,
         updateProfile,
         updatePassword,
+        changePassword,
         updateAvatar,
       }}
     >

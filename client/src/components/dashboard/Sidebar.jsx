@@ -9,7 +9,7 @@ import { AuthContext } from "../../context/AuthContext";
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logoutUser } = useContext(AuthContext);
+  const { auth, logoutUser } = useContext(AuthContext);
 
   const isActive = (path) => location.pathname === path;
 
@@ -47,8 +47,8 @@ const Sidebar = () => {
       </div>
       <div>
         <img
-          className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 cursor-pointer"
-          src="/profile.jpg"
+          className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 cursor-pointer hover:border-blue-400 transition-colors"
+          src={auth.user?.avatarUrl || "/profile.jpg"}
           alt="Profile"
           onClick={() => navigate("/profile")}
         />

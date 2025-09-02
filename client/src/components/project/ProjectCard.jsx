@@ -103,7 +103,7 @@ const ProjectCard = ({ project, onDelete, onUpdate }) => {
           <p className="text-gray-400 text-sm">Loading tasks...</p>
         ) : projectTasks && projectTasks.length > 0 ? (
           <ul className="space-y-1">
-            {projectTasks.slice(0, 3).map((task) => (
+            {projectTasks.slice(0, 2).map((task) => (
               <li key={task._id} className="text-sm text-gray-600 flex items-center">
                 <span className={`w-2 h-2 rounded-full mr-2 ${
                   task.status === 'Completed' ? 'bg-green-500' :
@@ -113,9 +113,9 @@ const ProjectCard = ({ project, onDelete, onUpdate }) => {
                 {task.title}
               </li>
             ))}
-            {projectTasks.length > 3 && (
+            {projectTasks.length > 2 && (
               <li className="text-xs text-gray-500">
-                +{projectTasks.length - 3} more tasks
+                +{projectTasks.length - 2} more tasks
               </li>
             )}
           </ul>
