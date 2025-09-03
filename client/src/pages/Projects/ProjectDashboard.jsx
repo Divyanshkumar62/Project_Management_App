@@ -41,63 +41,115 @@ export default function ProjectDashboard({ projectId }) {
   const {
     projectInfo,
     taskStats,
-    memberStats,
-    recentActivity,
-    upcomingDeadlines,
+    memberStats: rawMemberStats,
+    recentActivity: rawRecentActivity,
+    upcomingDeadlines: rawUpcomingDeadlines,
   } = dashboardData;
+
+  // Ensure arrays
+  const memberStats = Array.isArray(rawMemberStats) ? rawMemberStats : [];
+  const recentActivity = Array.isArray(rawRecentActivity) ? rawRecentActivity : [];
+  const upcomingDeadlines = Array.isArray(rawUpcomingDeadlines) ? rawUpcomingDeadlines : [];
 
   // Prepare chart data
   const chartData = [
-    { name: "Completed", value: taskStats.completed },
-    { name: "In Progress", value: taskStats.inProgress },
-    { name: "To Do", value: taskStats.todo },
-    { name: "Overdue", value: taskStats.overdue },
+    { name: "Completed", value: taskStats.completed, color: COLORS[0] },
+    { name: "In Progress", value: taskStats.inProgress, color: COLORS[1] },
+    { name: "To Do", value: taskStats.toDo, color: COLORS[2] },
+    { name: "Overdue", value: taskStats.overdue, color: COLORS[3] },
   ];
+
+  const memberChartData = memberStats.map((member, index) => ({
+    name: member.name,
+    tasks: member.taskCount,
+    color: COLORS[index % COLORS.length],
+  }));
 
   return (
     <div className="project-dashboard">
-      {/* Project Info Card */}
-      <div className="dashboard-section info-card">
-        <h2>{projectInfo.name}</h2>
-        <p>{projectInfo.description}</p>
-        <span className="dashboard-date">
-          Created: {formatDate(projectInfo.createdAt)}
-        </span>
+      {/* Project Overview */}
+      <div className="dashboard-section project-overview">
+        <h2>Project Overview</h2>
+        <div className="overview-stats">
+          <div className="stat-item">
+            <span className="stat-label">Total Tasks:</span>
+            <span className="stat-value">{taskStats.total}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Completed:</span>
+            <span className="stat-value completed">{taskStats.completed}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">In Progress:</span>
+            <span className="stat-value in-progress">{taskStats.inProgress}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">To Do:</span>
+            <span className="stat-value to-do">{taskStats.toDo}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Overdue:</span>
+            <span className="stat-value overdue">{taskStats.overdue}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Team Members:</span>
+            <span className="stat-value">{memberStats.length}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Progress:</span>
+            <span className="stat-value">
+              {taskStats.total > 0
+                ? Math.round((taskStats.completed / taskStats.total) * 100)
+                : 0}
+              %
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Task Stats Chart */}
-      <div className="dashboard-section task-stats">
-        <h3>Task Breakdown</h3>
-        <ResponsiveContainer width="100%" height={250}>
-          <PieChart>
-            <Pie
-              data={chartData}
-              dataKey="value"
-              nameKey="name"
-              cx="50%"
-              cy="50%"
-              outerRadius={80}
-              label
-            >
-              {chartData.map((entry, idx) => (
-                <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
+      {/* Charts */}
+      <div className="dashboard-charts">
+        <div className="chart-container">
+          <h3>Task Distribution</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={chartData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) =>
+                  `${name} ${(percent * 100).toFixed(0)}%`
+                }
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
 
-      {/* Member Stats */}
-      <div className="dashboard-section member-stats">
-        <h3>Members</h3>
-        <span>Total: {memberStats.totalMembers}</span>
-        <div>
-          <span className="badge owner">Owner: {memberStats.roles.owner}</span>
-          <span className="badge member">
-            Members: {memberStats.roles.members}
-          </span>
+        <div className="chart-container">
+          <h3>Tasks by Team Member</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={memberChartData}>
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="tasks" fill="#8884d8">
+                {memberChartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
@@ -131,21 +183,15 @@ export default function ProjectDashboard({ projectId }) {
           <div className="empty">No upcoming deadlines.</div>
         ) : (
           <ul>
-            {upcomingDeadlines.map((t, idx) => (
-              <li key={idx}>
-                <span
-                  className={`badge status-${t.status
-                    .replace(/\s/g, "")
-                    .toLowerCase()}`}
-                >
-                  {t.status}
-                </span>
-                <span className="deadline-title" title={t.title}>
-                  {t.title}
-                </span>
+            {upcomingDeadlines.map((deadline, idx) => (
+              <li key={idx} className={deadline.isOverdue ? "overdue" : ""}>
+                <span className="deadline-task">{deadline.taskTitle}</span>
                 <span className="deadline-date">
-                  Due: {formatDate(t.dueDate)}
+                  {formatDate(deadline.dueDate)}
                 </span>
+                {deadline.isOverdue && (
+                  <span className="overdue-label">Overdue</span>
+                )}
               </li>
             ))}
           </ul>

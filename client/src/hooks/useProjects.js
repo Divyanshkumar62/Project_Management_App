@@ -73,6 +73,8 @@ export const useDeleteProject = () => {
     mutationFn: deleteProject,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['userTasks'] });
     },
     onError: (error) => {
       console.error('Delete project error:', error);

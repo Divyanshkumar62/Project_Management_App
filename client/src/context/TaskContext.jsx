@@ -97,7 +97,7 @@ export const TaskProvider = ({ children }) => {
     onError: (err) => {
       console.error(
         "❌ Task Update Failed:",
-        err.response?.data || err.message
+        err.response?.data || err.message || err
       );
     },
   });
@@ -180,6 +180,7 @@ export const TaskProvider = ({ children }) => {
   };
 
   const updateTaskStatusById = async (projectId, taskId, status) => {
+    console.log("updateTaskStatusById called with:", { projectId, taskId, status });
     try {
       await updateTaskStatusMutation.mutateAsync({ projectId, taskId, status });
       return { success: true };

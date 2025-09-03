@@ -13,6 +13,7 @@ const activityRoutes = require("./routes/activity.route.js");
 const commentRoutes = require("./routes/comment.route");
 const userRoutes = require("./routes/user.route");
 const uploadRoutes = require("./routes/uploads");
+const templateRoutes = require("./routes/template.route");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -46,6 +47,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api", commentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/uploads", uploadRoutes);
+app.use("/api/templates", templateRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

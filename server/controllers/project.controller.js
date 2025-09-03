@@ -336,6 +336,10 @@ const deleteProject = async (req, res) => {
         .json({ msg: "Only project owner can delete this project" });
     }
 
+    // Delete all tasks associated with this project
+    const Task = require("../models/Task");
+    await Task.deleteMany({ projectId: req.params.id });
+
     await Project.findByIdAndDelete(req.params.id);
     res.status(200).json({
       success: true,
@@ -436,3 +440,71 @@ module.exports = {
   archiveProject,
   transferOwnership,
 };
+
+// Add milestone management
+const addMilestone = async (req, res) => {
+  try {
+    const { title, description, dueDate, tasks } = req.body;
+    const project = await Project.findById(req.params.projectId);
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    const isMember = project.teamMembers.some(member => 
+      member.user.toString() === req.user.id
+    );
+
+    if (!isMember) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    project.milestones.push({
+      title,
+      description,
+      dueDate,
+      tasks: tasks || []
+    });
+
+    await project.save();
+    res.json(project.milestones[project.milestones.length - 1]);
+  } catch (error) {
+    console.error('Add milestone error:', error);
+    res.status(500).json({ message: 'Error adding milestone' });
+  }
+};
+
+const updateMilestone = async (req, res) => {
+  try {
+    const { projectId, milestoneId } = req.params;
+    const { status } = req.body;
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    const milestone = project.milestones.id(milestoneId);
+    if (!milestone) {
+      return res.status(404).json({ message: 'Milestone not found' });
+    }
+
+    if (status === 'Completed') {
+      milestone.status = 'Completed';
+      milestone.completedAt = new Date();
+      milestone.completedBy = req.user.id;
+    } else {
+      milestone.status = status;
+    }
+
+    await project.save();
+    res.json(milestone);
+  } catch (error) {
+    console.error('Update milestone error:', error);
+    res.status(500).json({ message: 'Error updating milestone' });
+  }
+};
+
+// Export milestone functions
+module.exports.addMilestone = addMilestone;
+module.exports.updateMilestone = updateMilestone;

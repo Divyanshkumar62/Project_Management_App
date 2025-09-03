@@ -1,9 +1,11 @@
 import React, { useRef, useEffect } from "react";
-import { FaTimes, FaCalendar, FaUsers, FaTasks } from "react-icons/fa";
+import { FaTimes, FaCalendar, FaUsers, FaTasks, FaExternalLinkAlt } from "react-icons/fa";
 import { useTasks } from "../../hooks/useTasks";
+import { useNavigate } from "react-router-dom";
 
 const ProjectDetailsModal = ({ project, closeModal }) => {
   const modalRef = useRef(null);
+  const navigate = useNavigate();
   
   // Fetch tasks for this specific project
   const { data: projectTasks = [], isLoading: tasksLoading } = useTasks(project._id);
@@ -17,6 +19,11 @@ const ProjectDetailsModal = ({ project, closeModal }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [closeModal]);
+
+  const handleViewFullProject = () => {
+    closeModal();
+    navigate(`/projects/${project._id}`);
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -49,8 +56,16 @@ const ProjectDetailsModal = ({ project, closeModal }) => {
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden" ref={modalRef}>
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
-          <div className="w-8"></div> {/* Spacer for centering */}
-          <h2 className="text-2xl font-bold text-gray-900 text-center">{project.title}</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-bold text-gray-900">{project.title}</h2>
+            <button
+              onClick={handleViewFullProject}
+              className="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition-colors text-sm flex items-center gap-2"
+            >
+              <FaExternalLinkAlt size={12} />
+              View Full Project
+            </button>
+          </div>
           <button
             onClick={closeModal}
             className="text-gray-400 hover:text-gray-600 transition-colors"

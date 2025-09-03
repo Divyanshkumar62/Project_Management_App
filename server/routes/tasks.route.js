@@ -27,7 +27,7 @@ router.get("/user", auth, fetchUserTasks);
 // Supports filtering, search, and pagination
 router.get("/", auth, fetchTasks);
 router.get("/:taskId", auth, getTaskById);
-router.put("/:taskId", [auth, checkRole(["Admin", "Manager"])], updateTask);
-router.delete("/:taskId", [auth, checkRole(["Admin", "Manager"])], deleteTask);
+router.put("/:taskId", [auth, checkRole(["Admin", "Manager", "Owner"])], updateTask);
+router.delete("/:taskId", [auth, checkRole(["Admin", "Manager", "Owner"])], deleteTask);
 
 module.exports = router;

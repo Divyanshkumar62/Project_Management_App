@@ -32,6 +32,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const ProjectDetails = lazy(() => import("./pages/Projects/ProjectDetails"));
 const ProjectList = lazy(() => import("./pages/Projects/ProjectList"));
 const MyTasks = lazy(() => import("./pages/Tasks/MyTasks"));
+const TemplateLibrary = lazy(() => import("./pages/Templates/TemplateLibrary"));
 
 const App = () => {
   return (
@@ -69,6 +70,14 @@ const App = () => {
                         element={
                           <ProtectedRoute>
                             <ProjectList />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="/templates"
+                        element={
+                          <ProtectedRoute>
+                            <TemplateLibrary />
                           </ProtectedRoute>
                         }
                       />

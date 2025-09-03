@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { IoGridOutline } from "react-icons/io5";
 import { TbLogout2 } from "react-icons/tb";
 import { FaDiagramProject } from "react-icons/fa6";
+import { FaClipboardList } from "react-icons/fa";
 import { BsListTask } from "react-icons/bs";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
@@ -28,6 +29,12 @@ const Sidebar = () => {
           onClick={() => navigate("/projects")}
         >
           <FaDiagramProject size={30} />
+        </span>
+        <span 
+          className={`cursor-pointer transition-colors ${isActive('/templates') ? 'text-blue-700' : 'hover:text-blue-700'}`}
+          onClick={() => navigate("/templates")}
+        >
+          <FaClipboardList size={30} />
         </span>
         <span 
           className={`cursor-pointer transition-colors ${isActive('/my-tasks') ? 'text-blue-700' : 'hover:text-blue-700'}`}

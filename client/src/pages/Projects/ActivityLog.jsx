@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useActivity } from "../../context/ActivityContext";
 import { formatDistanceToNow } from "date-fns";
-import { Avatar } from "../../components/common/Header"; // adjust if needed
+
 
 const typeIcon = {
   PROJECT_CREATED: "📁",
@@ -36,7 +36,9 @@ const ActivityLog = ({ projectId }) => {
       {activities.map((act) => (
         <div key={act._id} className="flex items-center gap-3 py-3">
           <span className="text-2xl">{typeIcon[act.type] || "📝"}</span>
-          <Avatar user={act.user} size={36} />
+          <div className="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+            {act.user?.name?.charAt(0) || 'U'}
+          </div>
           <div className="flex-1">
             <div className="font-medium">
               {act.user?.name || act.user?.email || "User"}

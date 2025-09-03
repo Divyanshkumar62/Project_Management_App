@@ -53,7 +53,8 @@ export const getTaskById = async (projectId, taskId) => {
 
 export const updateTask = async (projectId, taskId, taskData) => {
   try {
-    const response = await api.put(API_ENDPOINTS.TASKS.BY_ID(projectId, taskId), taskData);
+    const taskIdStr = typeof taskId === 'object' ? taskId._id || taskId.id : String(taskId);
+    const response = await api.put(API_ENDPOINTS.TASKS.BY_ID(projectId, taskIdStr), taskData);
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;
@@ -74,7 +75,8 @@ export const removeTask = deleteTask;
 
 export const updateTaskStatus = async (projectId, taskId, status) => {
   try {
-    const response = await api.put(API_ENDPOINTS.TASKS.BY_ID(projectId, taskId), { status });
+    const taskIdStr = typeof taskId === 'object' ? taskId._id || taskId.id : String(taskId);
+    const response = await api.put(API_ENDPOINTS.TASKS.BY_ID(projectId, taskIdStr), { status });
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;

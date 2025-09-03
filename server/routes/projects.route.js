@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { check } = require("express-validator");
+const { check, body } = require("express-validator");
 const auth = require("../middleware/auth");
 const { requireRole } = require("../middleware/auth");
 
@@ -46,5 +46,17 @@ router.put(
   transferOwnership
 );
 router.delete("/:id", [auth, requireRole("Owner")], deleteProject);
+
+// Milestone routes
+router.post('/:projectId/milestones', auth, [
+  body('title').isLength({ min: 1, max: 100 }).trim(),
+  body('description').optional().isLength({ max: 500 }).trim(),
+  body('dueDate').isISO8601(),
+  body('tasks').optional().isArray()
+], (req, res) => res.status(501).json({ message: 'Milestone feature coming soon' }));
+
+router.put('/:projectId/milestones/:milestoneId', auth, [
+  body('status').isIn(['Pending', 'Completed', 'Overdue'])
+], (req, res) => res.status(501).json({ message: 'Milestone feature coming soon' }));
 
 module.exports = router;
