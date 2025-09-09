@@ -1,7 +1,7 @@
 import React from "react";
 import Navbar from "../../components/Navbar";
 import { useNavigate } from "react-router-dom";
-import TypewriterEffect from "../../components/ui/TypeWriterEffect";
+import TypewriterEffect from "../../components/ui/TypewriterEffect";
 
 const LandingPage = () => {
   const navigate = useNavigate();
