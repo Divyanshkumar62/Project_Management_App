@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { check, body } = require("express-validator");
 const auth = require("../middleware/auth");
-const { requireRole } = require("../middleware/auth");
+const requireRole = require("../middleware/auth").requireRole;
 
 const {
   createProject,
@@ -109,6 +109,6 @@ router.put('/:projectId/resources/allocations/:allocationId', auth, [
   body('status').optional().isIn(['Active', 'Completed', 'Cancelled'])
 ], resourceController.updateAllocation);
 
-router.delete('/resources/allocations/:allocationId', auth, resourceController.removeAllocation);
+router.delete('/:projectId/resources/allocations/:allocationId', auth, resourceController.removeAllocation);
 
 module.exports = router;

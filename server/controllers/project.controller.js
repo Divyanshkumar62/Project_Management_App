@@ -495,6 +495,30 @@ const updateMilestone = async (req, res) => {
   }
 };
 
+// Delete milestone
+const deleteMilestone = async (req, res) => {
+  try {
+    const { projectId, milestoneId } = req.params;
+
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    const milestone = project.milestones.id(milestoneId);
+    if (!milestone) {
+      return res.status(404).json({ message: 'Milestone not found' });
+    }
+
+    project.milestones.pull(milestoneId);
+    await project.save();
+    res.json({ message: 'Milestone deleted successfully' });
+  } catch (error) {
+    console.error('Delete milestone error:', error);
+    res.status(500).json({ message: 'Error deleting milestone' });
+  }
+};
+
 module.exports = {
   createProject,
   getProject,
@@ -506,5 +530,6 @@ module.exports = {
   archiveProject,
   transferOwnership,
   addMilestone,
-  updateMilestone
+  updateMilestone,
+  deleteMilestone
 };
