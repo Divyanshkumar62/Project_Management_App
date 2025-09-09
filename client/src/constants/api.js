@@ -1,4 +1,4 @@
-export const API_BASE_URL = "http://localhost:5001/api";
+export const API_BASE_URL = "https://project-pilot-tx67.onrender.com/api";
 
 export const API_ENDPOINTS = {
   // Auth
@@ -7,7 +7,7 @@ export const API_ENDPOINTS = {
     SIGNUP: "/auth/signup",
     SEARCH_USERS: "/auth/search",
   },
-  
+
   // Projects
   PROJECTS: {
     BASE: "/projects",
@@ -15,9 +15,10 @@ export const API_ENDPOINTS = {
     DASHBOARD: (id) => `/projects/${id}/dashboard`,
     RENAME: (id) => `/projects/${id}/rename`,
     ARCHIVE: (id) => `/projects/${id}/archive`,
-    TRANSFER_OWNERSHIP: (projectId, userId) => `/projects/${projectId}/transfer-ownership/${userId}`,
+    TRANSFER_OWNERSHIP: (projectId, userId) =>
+      `/projects/${projectId}/transfer-ownership/${userId}`,
   },
-  
+
   // Tasks
   TASKS: {
     BASE: "/tasks",
@@ -25,36 +26,40 @@ export const API_ENDPOINTS = {
     PROJECT_TASKS: (projectId) => `/projects/${projectId}/tasks`,
     BY_ID: (projectId, taskId) => `/projects/${projectId}/tasks/${taskId}`,
   },
-  
+
   // Invitations
   INVITATIONS: {
     PROJECT_INVITATIONS: (projectId) => `/projects/${projectId}/invitations`,
-    ACCEPT: (projectId, invitationId) => `/projects/${projectId}/invitations/${invitationId}/accept`,
-    DECLINE: (projectId, invitationId) => `/projects/${projectId}/invitations/${invitationId}/decline`,
+    ACCEPT: (projectId, invitationId) =>
+      `/projects/${projectId}/invitations/${invitationId}/accept`,
+    DECLINE: (projectId, invitationId) =>
+      `/projects/${projectId}/invitations/${invitationId}/decline`,
   },
-  
+
   // Notifications
   NOTIFICATIONS: {
     BASE: "/notifications",
     MARK_READ: (id) => `/notifications/${id}/read`,
     DELETE: (id) => `/notifications/${id}`,
   },
-  
+
   // Activity
   ACTIVITY: {
     PROJECT_ACTIVITY: (projectId) => `/projects/${projectId}/activity`,
   },
-  
+
   // Templates
   TEMPLATES: {
     BASE: "/templates",
-    CREATE_PROJECT_FROM_TEMPLATE: (templateId) => `/templates/${templateId}/create-project`,
+    CREATE_PROJECT_FROM_TEMPLATE: (templateId) =>
+      `/templates/${templateId}/create-project`,
   },
 
   // Milestones
   MILESTONES: {
     PROJECT_MILESTONES: (projectId) => `/projects/${projectId}/milestones`,
-    BY_ID: (projectId, milestoneId) => `/projects/${projectId}/milestones/${milestoneId}`,
+    BY_ID: (projectId, milestoneId) =>
+      `/projects/${projectId}/milestones/${milestoneId}`,
   },
 
   // Time Tracking
@@ -80,11 +85,13 @@ export const API_ENDPOINTS = {
     AVATAR: "/users/me/avatar",
     PUBLIC_PROFILE: (userId) => `/users/${userId}`,
   },
-  
+
   // Uploads
   UPLOADS: {
-    TASK_ATTACHMENT: (projectId, taskId) => `/uploads/projects/${projectId}/tasks/${taskId}/attachments`,
-    COMMENT_ATTACHMENT: (projectId, commentId) => `/uploads/projects/${projectId}/comments/${commentId}/attachments`,
+    TASK_ATTACHMENT: (projectId, taskId) =>
+      `/uploads/projects/${projectId}/tasks/${taskId}/attachments`,
+    COMMENT_ATTACHMENT: (projectId, commentId) =>
+      `/uploads/projects/${projectId}/comments/${commentId}/attachments`,
     DELETE_ATTACHMENT: (attachmentId) => `/uploads/attachments/${attachmentId}`,
   },
 
@@ -93,8 +100,11 @@ export const API_ENDPOINTS = {
     PROFILE: "/resources/profile",
     AVAILABILITY: "/resources/availability",
     PROJECT_RESOURCES: (projectId) => `/projects/${projectId}/resources`,
-    ALLOCATE_RESOURCE: (projectId) => `/projects/${projectId}/resources/allocate`,
-    UPDATE_ALLOCATION: (projectId, allocationId) => `/projects/${projectId}/resources/allocations/${allocationId}`,
-    REMOVE_ALLOCATION: (allocationId) => `/resources/allocations/${allocationId}`,
+    ALLOCATE_RESOURCE: (projectId) =>
+      `/projects/${projectId}/resources/allocate`,
+    UPDATE_ALLOCATION: (projectId, allocationId) =>
+      `/projects/${projectId}/resources/allocations/${allocationId}`,
+    REMOVE_ALLOCATION: (allocationId) =>
+      `/resources/allocations/${allocationId}`,
   },
 };
