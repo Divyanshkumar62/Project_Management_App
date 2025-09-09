@@ -23,10 +23,20 @@ const app = express();
 // Connecting to the database
 connectDB();
 
-// CORS configuration for frontend with credentials
+const allowedOrigins = [
+  "http://localhost:5173", 
+  "https://project-pilot-wine.vercel.app", // Vercel frontend
+];
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
