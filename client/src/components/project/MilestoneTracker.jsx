@@ -1,82 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FaPlus, FaCalendar, FaCheckCircle, FaClock, FaExclamationTriangle } from 'react-icons/fa';
+import * as milestoneService from '../../services/milestoneService';
 
 const MilestoneTracker = ({ project, tasks = [] }) => {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [milestones, setMilestones] = useState([]);
   const [newMilestone, setNewMilestone] = useState({
     title: '',
     description: '',
     dueDate: ''
   });
+  const queryClient = useQueryClient();
 
-  // Initialize milestones based on project data
-  useEffect(() => {
-    if (project) {
-      // Use project milestones if they exist, otherwise create default ones
-      const projectMilestones = project.milestones || [];
-      
-      if (projectMilestones.length === 0) {
-        // Create default milestones based on project timeline
-        const startDate = new Date(project.startDate || project.createdAt);
-        const endDate = project.endDate ? new Date(project.endDate) : new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
-        const duration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-        
-        const defaultMilestones = [
-          {
-            _id: 'default-1',
-            title: 'Project Kickoff',
-            description: 'Project initialization and team setup',
-            dueDate: new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            status: 'Completed',
-            completedAt: startDate.toISOString()
-          },
-          {
-            _id: 'default-2',
-            title: 'Mid-Project Review',
-            description: 'Review progress and adjust timeline if needed',
-            dueDate: new Date(startDate.getTime() + (duration * 0.5) * 24 * 60 * 60 * 1000).toISOString(),
-            status: tasks.length > 0 && tasks.filter(t => t.status === 'Completed').length > tasks.length * 0.3 ? 'Completed' : 'Pending'
-          },
-          {
-            _id: 'default-3',
-            title: 'Project Completion',
-            description: 'Final deliverables and project closure',
-            dueDate: endDate.toISOString(),
-            status: tasks.length > 0 && tasks.filter(t => t.status === 'Completed').length === tasks.length ? 'Completed' : 'Pending'
-          }
-        ];
-        
-        setMilestones(defaultMilestones);
-      } else {
-        setMilestones(projectMilestones);
-      }
+  // Fetch milestones from backend
+  const { data: milestones = [], isLoading, error } = useQuery({
+    queryKey: ['milestones', project?._id],
+    queryFn: () => milestoneService.getMilestones(project._id),
+    enabled: !!project?._id
+  });
+
+  // Create milestone mutation
+  const createMilestoneMutation = useMutation({
+    mutationFn: (milestoneData) => milestoneService.createMilestone(project._id, milestoneData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['milestones', project._id]);
+      setNewMilestone({ title: '', description: '', dueDate: '' });
+      setShowAddModal(false);
+    },
+    onError: (error) => {
+      console.error('Error creating milestone:', error);
+      alert('Failed to create milestone. Please try again.');
     }
-  }, [project, tasks]);
+  });
+
+  // Update milestone mutation
+  const updateMilestoneMutation = useMutation({
+    mutationFn: ({ milestoneId, status }) =>
+      milestoneService.updateMilestone(project._id, milestoneId, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['milestones', project._id]);
+    },
+    onError: (error) => {
+      console.error('Error updating milestone:', error);
+      alert('Failed to update milestone. Please try again.');
+    }
+  });
 
   const handleAddMilestone = (e) => {
     e.preventDefault();
-    const milestone = {
-      _id: Date.now().toString(),
-      ...newMilestone,
-      status: 'Pending',
-      createdAt: new Date().toISOString()
-    };
-    setMilestones([...milestones, milestone]);
-    setNewMilestone({ title: '', description: '', dueDate: '' });
-    setShowAddModal(false);
+    createMilestoneMutation.mutate({
+      title: newMilestone.title,
+      description: newMilestone.description,
+      dueDate: new Date(newMilestone.dueDate).toISOString(),
+      tasks: [] // Empty tasks array for now
+    });
   };
 
   const handleStatusChange = (milestoneId, status) => {
-    setMilestones(milestones.map(milestone => 
-      milestone._id === milestoneId 
-        ? { 
-            ...milestone, 
-            status, 
-            completedAt: status === 'Completed' ? new Date().toISOString() : null 
-          }
-        : milestone
-    ));
+    updateMilestoneMutation.mutate({
+      milestoneId,
+      status
+    });
   };
 
   const getStatusColor = (status) => {
@@ -125,7 +109,8 @@ const MilestoneTracker = ({ project, tasks = [] }) => {
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm flex items-center gap-2"
+          disabled={isLoading}
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm flex items-center gap-2 disabled:opacity-50"
         >
           <FaPlus size={12} />
           Add Milestone
@@ -257,14 +242,16 @@ const MilestoneTracker = ({ project, tasks = [] }) => {
               <div className="flex gap-3">
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+                  disabled={createMilestoneMutation.isLoading}
+                  className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
                 >
-                  Add Milestone
+                  {createMilestoneMutation.isLoading ? 'Creating...' : 'Add Milestone'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
                   className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
+                  disabled={createMilestoneMutation.isLoading}
                 >
                   Cancel
                 </button>

@@ -14,7 +14,12 @@ const {
   renameProject,
   archiveProject,
   transferOwnership,
+  addMilestone,
+  updateMilestone,
+  deleteMilestone,
 } = require("../controllers/project.controller.js");
+
+const resourceController = require("../controllers/resource.controller");
 
 router.post(
   "/",
@@ -47,16 +52,63 @@ router.put(
 );
 router.delete("/:id", [auth, requireRole("Owner")], deleteProject);
 
+const getMilestones = async (req, res) => {
+  try {
+    const project = await require("../models/Project").findById(req.params.projectId);
+
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    const isMember = project.teamMembers.some(member =>
+      member.user.toString() === req.user.id
+    );
+
+    if (!isMember) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    res.json(project.milestones);
+  } catch (error) {
+    console.error('Get milestones error:', error);
+    res.status(500).json({ message: 'Error retrieving milestones' });
+  }
+};
+
 // Milestone routes
-router.post('/:projectId/milestones', auth, [
+router.get('/:projectId/milestones', auth, getMilestones);
+
+router.post('/:projectId/milestones', [
+  auth,
   body('title').isLength({ min: 1, max: 100 }).trim(),
   body('description').optional().isLength({ max: 500 }).trim(),
   body('dueDate').isISO8601(),
   body('tasks').optional().isArray()
-], (req, res) => res.status(501).json({ message: 'Milestone feature coming soon' }));
+], addMilestone);
 
-router.put('/:projectId/milestones/:milestoneId', auth, [
+router.put('/:projectId/milestones/:milestoneId', [
+  auth,
   body('status').isIn(['Pending', 'Completed', 'Overdue'])
-], (req, res) => res.status(501).json({ message: 'Milestone feature coming soon' }));
+], updateMilestone);
+
+router.delete('/:projectId/milestones/:milestoneId', auth, deleteMilestone);
+
+// Resource Management Routes
+router.get('/:projectId/resources', auth, resourceController.getProjectResources);
+router.post('/:projectId/resources/allocate', auth, [
+  body('projectId').isMongoId(),
+  body('hoursAllocated').isInt({ min: 1, max: 80 }),
+  body('startDate').isISO8601(),
+  body('endDate').isISO8601()
+], resourceController.allocateResource);
+
+router.put('/:projectId/resources/allocations/:allocationId', auth, [
+  body('hoursAllocated').optional().isInt({ min: 1, max: 80 }),
+  body('startDate').optional().isISO8601(),
+  body('endDate').optional().isISO8601(),
+  body('status').optional().isIn(['Active', 'Completed', 'Cancelled'])
+], resourceController.updateAllocation);
+
+router.delete('/resources/allocations/:allocationId', auth, resourceController.removeAllocation);
 
 module.exports = router;

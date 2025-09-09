@@ -429,17 +429,7 @@ const getProjectDashboard = async (req, res) => {
   }
 };
 
-module.exports = {
-  createProject,
-  getProject,
-  getProjectById,
-  updateProject,
-  deleteProject,
-  getProjectDashboard,
-  renameProject,
-  archiveProject,
-  transferOwnership,
-};
+
 
 // Add milestone management
 const addMilestone = async (req, res) => {
@@ -505,6 +495,16 @@ const updateMilestone = async (req, res) => {
   }
 };
 
-// Export milestone functions
-module.exports.addMilestone = addMilestone;
-module.exports.updateMilestone = updateMilestone;
+module.exports = {
+  createProject,
+  getProject,
+  getProjectById,
+  updateProject,
+  deleteProject,
+  getProjectDashboard,
+  renameProject,
+  archiveProject,
+  transferOwnership,
+  addMilestone,
+  updateMilestone
+};

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FaTimes } from 'react-icons/fa';
-import api from '../../services/api';
+import * as templateService from '../../services/templateService';
 
 const CreateTemplateModal = ({ closeModal }) => {
   const [formData, setFormData] = useState({
@@ -15,10 +15,7 @@ const CreateTemplateModal = ({ closeModal }) => {
   const queryClient = useQueryClient();
 
   const createTemplateMutation = useMutation({
-    mutationFn: async (templateData) => {
-      const response = await api.post('/templates', templateData);
-      return response.data;
-    },
+    mutationFn: (templateData) => templateService.createTemplate(templateData),
     onSuccess: () => {
       queryClient.invalidateQueries(['templates']);
       closeModal();

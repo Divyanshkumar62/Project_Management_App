@@ -9,11 +9,11 @@ import { AuthProvider } from "./context/AuthContext";
 import SkeletonLoader from "./components/ui/SkeltonLoader";
 import LandingPage from "./pages/Home/LandingPage";
 import { ProfileProvider } from "./context/ProfileContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 const ProfileView = lazy(() => import("./pages/Profile/ProfileView"));
 const ProfileEdit = lazy(() => import("./pages/Profile/ProfileEdit"));
 const ChangePassword = lazy(() => import("./pages/Profile/ChangePassword"));
 import { ProjectProvider } from "./context/ProjectContext";
-import { QueryClientProvider } from "@tanstack/react-query";
 import { TaskProvider } from "./context/TaskContext";
 import TaskList from "./pages/Tasks/TaskList";
 import { InvitationProvider } from "./context/InvitationContext";
@@ -35,8 +35,11 @@ const MyTasks = lazy(() => import("./pages/Tasks/MyTasks"));
 const TemplateLibrary = lazy(() => import("./pages/Templates/TemplateLibrary"));
 
 const App = () => {
+  const queryClient = new QueryClient();
+
   return (
-    <AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
       <ProjectProvider>
         <TaskProvider>
           <InvitationProvider>
@@ -147,6 +150,7 @@ const App = () => {
         </TaskProvider>
       </ProjectProvider>
     </AuthProvider>
+    </QueryClientProvider>
   );
 };
 

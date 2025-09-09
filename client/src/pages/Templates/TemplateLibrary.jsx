@@ -4,7 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../../components/dashboard/Sidebar';
 import CreateTemplateModal from '../../components/modals/CreateTemplateModal';
 import { useDebounce } from '../../hooks/useDebounce';
-import api from '../../services/api';
+import * as templateService from '../../services/templateService';
+import * as projectService from '../../services/projectService';
+import * as taskService from '../../services/taskService';
 
 const TemplateLibrary = () => {
   const [search, setSearch] = useState('');
@@ -17,24 +19,19 @@ const TemplateLibrary = () => {
   // Fetch templates
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['templates', debouncedSearch, category],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (debouncedSearch) params.append('search', debouncedSearch);
-      if (category) params.append('category', category);
-      
-      const response = await api.get(`/templates?${params}`);
-      return response.data;
-    }
+    queryFn: () => templateService.getTemplates({
+      search: debouncedSearch,
+      category: category
+    })
   });
 
   // Create project from template
   const createProjectMutation = useMutation({
-    mutationFn: async ({ templateId, projectData }) => {
-      const response = await api.post(`/templates/${templateId}/create-project`, projectData);
-      return response.data;
-    },
+    mutationFn: ({ templateId, projectData }) =>
+      templateService.createProjectFromTemplate(templateId, projectData),
     onSuccess: (project) => {
       queryClient.invalidateQueries(['projects']);
+      queryClient.invalidateQueries(['templates']);
       navigate(`/projects/${project._id}`);
     }
   });
@@ -108,43 +105,45 @@ const TemplateLibrary = () => {
 
   const displayTemplates = templates.length > 0 ? templates : predefinedTemplates;
 
-  const handleUsePredefinedTemplate = (template) => {
-    // For predefined templates, create project directly
-    const projectData = {
-      title: `${template.name} Project`,
-      description: template.description,
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: new Date(Date.now() + template.defaultDuration * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    };
-    
-    // Show success message immediately
-    alert(`✅ Template "${template.name}" selected successfully!\n\nYour new project has been created. You can view it under "Projects" in the sidebar.`);
-    
-    // Create project directly without template
-    api.post('/projects', projectData).then(response => {
-      const project = response.data;
-      
+  const handleUsePredefinedTemplate = async (template) => {
+    try {
+      // Create project using service
+      const projectData = {
+        title: `${template.name} Project`,
+        description: template.description,
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + template.defaultDuration * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      };
+
+      const project = await projectService.createProject(projectData);
+
       // Create tasks for the project
       const taskPromises = template.tasks.map(async (templateTask, index) => {
         const taskStartDate = new Date(projectData.startDate);
         taskStartDate.setDate(taskStartDate.getDate() + (index * 2));
-        
-        return api.post(`/projects/${project._id}/tasks`, {
+
+        const taskData = {
           title: templateTask.title,
           description: templateTask.description,
           priority: templateTask.priority,
           dueDate: new Date(taskStartDate.getTime() + (templateTask.estimatedDays * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]
-        });
+        };
+
+        return taskService.createTask(project._id, taskData);
       });
-      
-      Promise.all(taskPromises).then(() => {
-        queryClient.invalidateQueries(['projects']);
-        navigate(`/projects/${project._id}`);
-      });
-    }).catch(error => {
+
+      await Promise.all(taskPromises);
+
+      // Show success message
+      alert(`✅ Template "${template.name}" selected successfully!\n\nYour new project has been created. You can view it under "Projects" in the sidebar.`);
+
+      // Update queries and navigate
+      queryClient.invalidateQueries(['projects']);
+      navigate(`/projects/${project._id}`)
+    } catch (error) {
       alert('❌ Error creating project. Please try again.');
       console.error('Error:', error);
-    });
+    }
   };
 
   return (

@@ -14,6 +14,8 @@ const commentRoutes = require("./routes/comment.route");
 const userRoutes = require("./routes/user.route");
 const uploadRoutes = require("./routes/uploads");
 const templateRoutes = require("./routes/template.route");
+const timeEntryRoutes = require("./routes/timeEntries.route");
+const resourceRoutes = require("./routes/resource.route");
 const errorHandler = require("./middleware/errorHandler");
 
 const app = express();
@@ -48,6 +50,8 @@ app.use("/api", commentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/templates", templateRoutes);
+app.use("/api/time-entries", timeEntryRoutes);
+app.use("/api/resources", resourceRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

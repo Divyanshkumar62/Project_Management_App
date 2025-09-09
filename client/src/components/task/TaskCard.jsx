@@ -1,6 +1,7 @@
 import React, { useContext, useState } from "react";
 import { TaskContext } from "../../context/TaskContext";
 import { ProjectContext } from "../../context/ProjectContext";
+import TimeTracker from "./TimeTracker";
 
 const TaskCard = ({ task }) => {
   const { removeTaskById, updateTaskById } = useContext(TaskContext);
@@ -106,6 +107,11 @@ const TaskCard = ({ task }) => {
               Delete
             </button>
           )}
+        </div>
+
+        {/* Time Tracker Component */}
+        <div className="mt-4 border-t pt-4">
+          <TimeTracker taskId={task._id} projectId={task.projectId || task.project} />
         </div>
       </div>
 
