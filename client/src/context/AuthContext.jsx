@@ -1,4 +1,5 @@
 import { createContext, useEffect, useState } from "react";
+import { authenticateSocket, disconnectSocket } from "../socket/socketClient";
 
 export const AuthContext = createContext();
 
@@ -21,16 +22,29 @@ export const AuthProvider = ({ children }) => {
     }
   }, [auth.token]);
 
-  const loginUser = (token, userData) => {
+  const loginUser = async (token, userData) => {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(userData));
     setAuth({ token, user: userData });
+
+    // Authenticate socket for real-time features
+    try {
+      await authenticateSocket(userData._id);
+      console.log("✅ Socket authenticated successfully");
+    } catch (error) {
+      console.error("❌ Socket authentication failed:", error);
+    }
   };
 
   const logoutUser = () => {
+    // Disconnect socket before clearing auth data
+    disconnectSocket();
+
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setAuth({ token: null, user: null });
+
+    console.log("✅ Socket disconnected");
   };
 
   return (

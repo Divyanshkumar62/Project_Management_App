@@ -1,6 +1,12 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
 import { TaskContext } from "../../context/TaskContext";
 import TaskCard from "../../components/task/TaskCard";
+import { SkeletonTaskList } from "../../components/ui/SkeletonCard";
+import EditTaskModal from "../../components/modals/EditTaskModal";
+import DeleteConfirmationModal from "../../components/modals/DeleteConfirmationModal";
+import { useDeleteTask, useTasks, useUserTasks } from "../../hooks/useTasks";
+import { useQueryClient } from "@tanstack/react-query";
+import { on, joinProjectRoom, leaveProjectRoom } from "../../socket/socketClient";
 
 const DEBOUNCE_MS = 300;
 
@@ -8,47 +14,91 @@ const statusOptions = ["All", "To Do", "In Progress", "Completed"];
 const priorityOptions = ["All", "Low", "Medium", "High"];
 
 const TaskList = () => {
-  const { filterTasks } = useContext(TaskContext);
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { loadProjectTasks, refetchProjectTasks } = useContext(TaskContext);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("All");
   const [priority, setPriority] = useState("All");
   const [page, setPage] = useState(1);
   const [limit] = useState(6);
-  const [total, setTotal] = useState(0);
   const debounceRef = useRef();
+  const queryClient = useQueryClient();
 
-  // Replace with actual projectId from context/router if needed
-  const projectId = null; // TODO: get current projectId
+  // Extract projectId from URL or use context
+  const currentPath = window.location.pathname;
+  const projectIdMatch = currentPath.match(/\/projects\/([^/]+)/);
+  const projectId = projectIdMatch ? projectIdMatch[1] : null;
+
+  // Use React Query hooks for data management
+  const { data: tasksData, isLoading, isError, error } = useTasks(
+    projectId,
+    {
+      q: search,
+      status: status !== "All" ? status : undefined,
+      priority: priority !== "All" ? priority : undefined,
+      page,
+      limit,
+    }
+  );
+
+  // If no projectId, use user tasks
+  const { data: userTasksData } = useUserTasks({ page, limit });
+
+  const data = projectId ? tasksData : userTasksData;
+  const tasks = data?.data || [];
+  const total = data?.total || 0;
+
+  const deleteTaskMutation = useDeleteTask();
+
+  // Modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedTaskForDelete, setSelectedTaskForDelete] = useState(null);
 
   useEffect(() => {
+    if (projectId) {
+      loadProjectTasks(projectId);
+    }
+  }, [projectId, loadProjectTasks]);
+
+  // Socket events for real-time updates
+  useEffect(() => {
     if (!projectId) return;
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    setLoading(true);
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const params = {
-          q: search,
-          status: status !== "All" ? status : undefined,
-          priority: priority !== "All" ? priority : undefined,
-          page,
-          limit,
-        };
-        const data = await filterTasks(projectId, params);
-        setTasks(data.tasks || []);
-        setTotal(data.total || 0);
-        setError("");
-      } catch (err) {
-        setError("Error loading tasks");
-        setTasks([]);
-      } finally {
-        setLoading(false);
+
+    // Join project room
+    joinProjectRoom(projectId);
+
+    // Listen for task updates
+    const handleTaskUpdated = () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'user'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+    };
+
+    const handleTaskDeleted = (taskData) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['tasks', 'user'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+
+      // Close modal if deleted task was being edited
+      if (selectedTask && selectedTask._id === taskData.id) {
+        handleCloseEditModal();
       }
-    }, DEBOUNCE_MS);
-    return () => clearTimeout(debounceRef.current);
-  }, [search, status, priority, page, limit, projectId, filterTasks]);
+      if (selectedTaskForDelete && selectedTaskForDelete._id === taskData.id) {
+        handleCloseDeleteModal();
+      }
+    };
+
+    // Subscribe to events
+    on('updated', handleTaskUpdated);
+    on('deleted', handleTaskDeleted);
+    on('created', handleTaskUpdated); // Task creation also needs to refresh the list
+
+    return () => {
+      // Cleanup
+      leaveProjectRoom(projectId);
+    };
+  }, [projectId, queryClient]);
 
   const handleSearch = (e) => {
     setSearch(e.target.value);
@@ -65,6 +115,40 @@ const TaskList = () => {
   const handlePrev = () => setPage((p) => Math.max(1, p - 1));
   const handleNext = () => {
     if (tasks.length === limit && page * limit < total) setPage((p) => p + 1);
+  };
+
+  const handleEditTask = (task) => {
+    setSelectedTask(task);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteTask = (task) => {
+    setSelectedTaskForDelete(task);
+    setShowDeleteModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setSelectedTask(null);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false);
+    setSelectedTaskForDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedTaskForDelete || !projectId) return;
+
+    try {
+      await deleteTaskMutation.mutateAsync({
+        projectId,
+        taskId: selectedTaskForDelete._id
+      });
+      handleCloseDeleteModal();
+    } catch (error) {
+      console.error("Failed to delete task:", error);
+    }
   };
 
   // Always use an array for mapping
@@ -104,12 +188,10 @@ const TaskList = () => {
           ))}
         </select>
       </div>
-      {loading ? (
-        <div className="flex justify-center items-center h-32">
-          <span className="animate-spin h-8 w-8 border-4 border-blue-400 border-t-transparent rounded-full"></span>
-        </div>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
+      {isLoading ? (
+        <SkeletonTaskList />
+      ) : isError ? (
+        <p className="text-red-500">{error?.message || "Error loading tasks"}</p>
       ) : safeTasks.length === 0 ? (
         <div className="text-center text-gray-500 mt-8">
           <svg
@@ -139,7 +221,13 @@ const TaskList = () => {
         <>
           <div className="grid grid-cols-1 gap-4">
             {safeTasks.map((task) => (
-              <TaskCard key={task._id} task={task} />
+              <TaskCard
+                key={task._id}
+                task={task}
+                projectId={projectId}
+                onEdit={handleEditTask}
+                onDelete={handleDeleteTask}
+              />
             ))}
           </div>
           <div className="flex justify-center items-center mt-6 gap-2">
@@ -160,6 +248,27 @@ const TaskList = () => {
             </button>
           </div>
         </>
+      )}
+
+      {/* Edit Task Modal */}
+      {showEditModal && selectedTask && (
+        <EditTaskModal
+          task={selectedTask}
+          projectId={projectId}
+          closeModal={handleCloseEditModal}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && selectedTaskForDelete && (
+        <DeleteConfirmationModal
+          isOpen={showDeleteModal}
+          onClose={handleCloseDeleteModal}
+          onConfirm={handleConfirmDelete}
+          title={`Delete Task: ${selectedTaskForDelete.title}`}
+          message={`Are you sure you want to delete "${selectedTaskForDelete.title}"? This action cannot be undone and will permanently remove this task from the project.`}
+          isDeleting={deleteTaskMutation.isPending}
+        />
       )}
     </div>
   );

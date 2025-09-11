@@ -76,7 +76,7 @@ export const removeTask = deleteTask;
 export const updateTaskStatus = async (projectId, taskId, status) => {
   try {
     const taskIdStr = typeof taskId === 'object' ? taskId._id || taskId.id : String(taskId);
-    const response = await api.put(API_ENDPOINTS.TASKS.BY_ID(projectId, taskIdStr), { status });
+    const response = await api.put(API_ENDPOINTS.TASKS.STATUS_BY_ID(projectId, taskIdStr), { status });
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;

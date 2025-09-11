@@ -1,5 +1,7 @@
 require("dotenv").config();
 const express = require("express");
+const { createServer } = require("http");
+const { Server } = require("socket.io");
 const connectDB = require("./config/db");
 const cors = require("cors");
 const path = require("path");
@@ -78,7 +80,56 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5001;
 
-app.listen(PORT, () => {
+// Create HTTP server and Socket.IO server
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true,
+  },
+  maxHttpBufferSize: 1e8,
+});
+
+// Store connected users with their socket IDs
+const connectedUsers = new Map();
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log('🔗 New client connected:', socket.id);
+
+  // Handle user authentication
+  socket.on('authenticate', (userId) => {
+    connectedUsers.set(userId, socket.id);
+    socket.userId = userId;
+    socket.join(userId); // Join user-specific room
+    console.log(`✅ User ${userId} authenticated`);
+  });
+
+  // Handle joining project rooms
+  socket.on('join_project', (projectId) => {
+    socket.join(`project_${projectId}`);
+    console.log(`👥 Socket ${socket.id} joined project ${projectId}`);
+  });
+
+  // Handle leaving project rooms
+  socket.on('leave_project', (projectId) => {
+    socket.leave(`project_${projectId}`);
+    console.log(`👋 Socket ${socket.id} left project ${projectId}`);
+  });
+
+  // Handle disconnect
+  socket.on('disconnect', () => {
+    connectedUsers.delete(socket.userId);
+    console.log('🚫 Client disconnected:', socket.id);
+  });
+});
+
+// Make io instance available globally for controllers
+global.io = io;
+
+// Start server
+server.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔌 Socket.IO enabled`);
 });

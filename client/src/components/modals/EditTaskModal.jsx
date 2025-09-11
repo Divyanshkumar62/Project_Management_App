@@ -1,0 +1,280 @@
+import React, { useState, useRef, useEffect } from "react";
+import { useUpdateTask, useUpdateTaskStatus } from "../../hooks/useTasks";
+import { searchUsers } from "../../services/authService";
+
+const EditTaskModal = ({ task, projectId, closeModal }) => {
+  const updateTaskMutation = useUpdateTask();
+  const updateStatusMutation = useUpdateTaskStatus();
+
+  // Extract projectId from task.project if not provided as prop
+  const effectiveProjectId = projectId || task?.project?._id || task?.project;
+
+  const [title, setTitle] = useState(task.title || "");
+  const [description, setDescription] = useState(task.description || "");
+  const [status, setStatus] = useState(task.status || "To Do");
+  const [priority, setPriority] = useState(task.priority || "Medium");
+  const [dueDate, setDueDate] = useState(
+    task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ""
+  );
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [assignedTo, setAssignedTo] = useState(task.assignedTo || null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState("");
+  const modalRef = useRef(null);
+
+  const statusOptions = ["To Do", "In Progress", "Completed"];
+  const priorityOptions = ["Low", "Medium", "High"];
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        closeModal();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [closeModal]);
+
+  const handleSearch = async (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+
+    if (value.length > 1) {
+      try {
+        const results = await searchUsers(value);
+        setSearchResults(results || []);
+      } catch (err) {
+        console.error("❌ Error searching users:", err);
+      }
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const handleAssignUser = (user) => {
+    setAssignedTo(user);
+    setSearchTerm(user.name);
+    setSearchResults([]);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!title.trim()) {
+      setMessage("Task title is required");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setMessage("");
+
+    try {
+      const taskData = {
+        title: title.trim(),
+        description: description.trim(),
+        status,
+        priority,
+        dueDate: dueDate || undefined,
+        assignedTo: assignedTo ? assignedTo._id : undefined,
+      };
+
+      await updateTaskMutation.mutateAsync({
+        projectId: effectiveProjectId,
+        taskId: task._id,
+        taskData
+      });
+
+      setMessage("Task updated successfully!");
+      setTimeout(() => {
+        closeModal();
+      }, 1000);
+    } catch (err) {
+      setMessage(`Error: ${err.message || "Failed to update task"}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStatusChange = async (newStatus) => {
+    if (newStatus === task.status) return;
+
+    try {
+      await updateStatusMutation.mutateAsync({
+        projectId: effectiveProjectId,
+        taskId: task._id,
+        status: newStatus
+      });
+      setStatus(newStatus);
+    } catch (error) {
+      console.error("Failed to update status:", error);
+      setMessage("Failed to update status");
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div
+        ref={modalRef}
+        className="bg-white p-6 rounded-md shadow-lg w-1/3 max-h-[90vh] overflow-y-auto"
+      >
+        <h2 className="text-xl font-semibold mb-4">Edit Task</h2>
+
+        {message && (
+          <div className={`mb-4 p-3 rounded ${
+            message.includes("Error") || message.includes("Failed")
+              ? "bg-red-100 text-red-700"
+              : "bg-green-100 text-green-700"
+          }`}>
+            {message}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Task Title *
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter task title"
+              required
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              rows="3"
+              placeholder="Enter task description"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status
+            </label>
+            <select
+              value={status}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                handleStatusChange(e.target.value);
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {statusOptions.map((statusOption) => (
+                <option key={statusOption} value={statusOption}>
+                  {statusOption}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Priority
+            </label>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {priorityOptions.map((priorityOption) => (
+                <option key={priorityOption} value={priorityOption}>
+                  {priorityOption}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Due Date
+            </label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Assign To
+            </label>
+            <input
+              type="text"
+              value={
+                assignedTo
+                  ? (searchTerm || assignedTo.name)
+                  : searchTerm
+              }
+              onChange={handleSearch}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Search users to assign..."
+            />
+
+            {searchResults.length > 0 && (
+              <div className="mt-2 border border-gray-300 rounded-md max-h-32 overflow-y-auto">
+                {searchResults.map((user) => (
+                  <div
+                    key={user._id}
+                    onClick={() => handleAssignUser(user)}
+                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {user.name} ({user.email})
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {assignedTo && (
+              <div className="mt-2 p-2 bg-blue-100 rounded-md">
+                Assigned to: {assignedTo.name} ({assignedTo.email})
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAssignedTo(null);
+                    setSearchTerm("");
+                  }}
+                  className="ml-2 text-red-500 hover:text-red-700"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={closeModal}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || !title.trim()}
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
+            >
+              {isSubmitting ? "Updating..." : "Update Task"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default EditTaskModal;

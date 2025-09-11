@@ -4,6 +4,7 @@ import { Navigate, useNavigate, Link } from "react-router-dom";
 import { login } from "../../services/authService";
 import { validateEmail } from "../../utils/Helper";
 import PasswordInput from "../Input/PasswordInput";
+import api from "../../services/api";
 
 const LoginForm = () => {
   const { auth, loginUser } = useContext(AuthContext);
@@ -28,10 +29,20 @@ const LoginForm = () => {
       }
       const data = await login(formData);
       const token = data.token;
-      const user = { email: formData.email };
-      loginUser(token, user);
+
+      // Save token to localStorage first so API calls work
+      const tempUser = { email: formData.email };
+      loginUser(token, tempUser);
+
+      // Now fetch complete user data including avatarUrl
+      const userResponse = await api.get('/users/me');
+      const completeUserData = userResponse.data;
+
+      // Update with complete user data
+      loginUser(token, completeUserData);
       navigate("/dashboard");
     } catch (err) {
+      console.error('Login process failed:', err);
       setError(`Invalid Credentials, please try again`);
     }
   };

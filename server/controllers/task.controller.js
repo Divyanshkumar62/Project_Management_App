@@ -4,6 +4,13 @@ const Task = require("../models/Task");
 const Project = require("../models/Project");
 const { createNotification } = require("./notification.controller");
 const { logActivity } = require("./activity.controller");
+
+// Helper function to emit real-time updates
+const emitTaskUpdate = (event, projectId, taskData) => {
+  if (global.io) {
+    global.io.to(`project_${projectId}`).emit(`task_${event}`, taskData);
+  }
+};
 const User = require("../models/User");
 
 const createTask = async (req, res) => {
@@ -63,6 +70,10 @@ const createTask = async (req, res) => {
       "TASK_CREATED",
       `Task '${title}' created by ${req.user.id}`
     );
+
+    // Emit real-time update
+    emitTaskUpdate('created', project._id, task);
+
     res.status(201).json(task);
   } catch (err) {
     console.error(err.message);
@@ -229,6 +240,10 @@ const updateTask = async (req, res) => {
       "TASK_UPDATED",
       `Task '${task.title}' updated by ${req.user.id}`
     );
+
+    // Emit real-time update
+    emitTaskUpdate('updated', project._id, task);
+
     res.status(200).json(task);
   } catch (err) {
     console.log(err.message);
@@ -265,6 +280,10 @@ const deleteTask = async (req, res) => {
       "TASK_DELETED",
       `Task '${task.title}' deleted by ${req.user.id}`
     );
+
+    // Emit real-time update
+    emitTaskUpdate('deleted', project._id, { id: req.params.taskId });
+
     res.status(200).json({ msg: "Task Deleted!" });
   } catch (err) {
     console.log(err.message);
@@ -301,6 +320,10 @@ const updateTaskStatus = async (req, res) => {
 
     task.status = status;
     await task.save();
+
+    // Emit real-time update
+    emitTaskUpdate('updated', project._id, task);
+
     res.status(200).json(task);
   } catch (err) {
     console.log(err.message);

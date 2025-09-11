@@ -1,4 +1,26 @@
-export const API_BASE_URL = "https://project-pilot-tx67.onrender.com/api";
+// Dynamic API base URL - works for both development and production
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+
+    // Development environment
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:5001/api';
+    }
+
+    // Production environment
+    if (hostname.includes('project-pilot') || hostname.includes('render.com')) {
+      return 'https://project-pilot-tx67.onrender.com/api';
+    }
+  }
+
+  // Fallback for SSR or unknown environments
+  return process.env.NODE_ENV === 'production'
+    ? 'https://project-pilot-tx67.onrender.com/api'
+    : 'http://localhost:5001/api';
+};
+
+export const API_BASE_URL = getApiBaseUrl();
 
 export const API_ENDPOINTS = {
   // Auth
@@ -25,6 +47,7 @@ export const API_ENDPOINTS = {
     USER_TASKS: "/tasks/user",
     PROJECT_TASKS: (projectId) => `/projects/${projectId}/tasks`,
     BY_ID: (projectId, taskId) => `/projects/${projectId}/tasks/${taskId}`,
+    STATUS_BY_ID: (projectId, taskId) => `/projects/${projectId}/tasks/${taskId}/status`,
   },
 
   // Invitations

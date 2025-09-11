@@ -1,15 +1,14 @@
 import React, { useState, Suspense } from 'react';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { FaPlus, FaFilter, FaSearch, FaTasks } from 'react-icons/fa';
 import TaskCard from '../task/TaskCard';
 import SkeletonTask from '../ui/SkeltonTask';
 
-const TasksTab = ({ 
-  tasks = [], 
-  isLoading, 
-  projectId, 
-  onTaskUpdate, 
-  onCreateTask 
+const TasksTab = ({
+  tasks = [],
+  isLoading,
+  projectId,
+  onTaskUpdate,
+  onCreateTask
 }) => {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,23 +24,6 @@ const TasksTab = ({
   // Group tasks by status
   const getTasksByStatus = (status) => {
     return filteredTasks.filter(task => task.status === status);
-  };
-
-  const handleDragEnd = async (result) => {
-    if (!result.destination) return;
-
-    const { source, destination } = result;
-    const sourceStatus = source.droppableId;
-    const destStatus = destination.droppableId;
-
-    // If dropped in different column, update status
-    if (sourceStatus !== destStatus) {
-      const taskId = typeof result.draggableId === 'object' ? result.draggableId._id : result.draggableId;
-      const task = tasks.find(t => t._id === taskId);
-      if (task && onTaskUpdate) {
-        onTaskUpdate(taskId, { status: destStatus });
-      }
-    }
   };
 
   const statusColumns = [
@@ -107,65 +89,34 @@ const TasksTab = ({
         </select>
       </div>
 
-      {/* Kanban Board */}
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {statusColumns.map((column) => {
-            const columnTasks = getTasksByStatus(column.id);
-            return (
-              <Droppable key={column.id} droppableId={column.id}>
-                {(provided, snapshot) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className={`p-4 rounded-lg border-2 border-dashed min-h-[400px] ${
-                      snapshot.isDraggingOver
-                        ? 'border-blue-400 bg-blue-50'
-                        : column.color
-                    }`}
-                  >
-                    <h4 className="font-semibold mb-4 text-center">
-                      {column.title} ({columnTasks.length})
-                    </h4>
-                    <div className="space-y-3">
-                      {columnTasks.map((task, index) => (
-                        <Draggable
-                          key={task._id}
-                          draggableId={task._id}
-                          index={index}
-                        >
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`${
-                                snapshot.isDragging
-                                  ? 'opacity-50 rotate-2 scale-105'
-                                  : ''
-                              } transition-transform`}
-                            >
-                              <Suspense fallback={<SkeletonTask />}>
-                                <TaskCard task={{ ...task, projectId }} />
-                              </Suspense>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                      {columnTasks.length === 0 && (
-                        <div className="text-center py-8 text-gray-400">
-                          <p className="text-sm">No {column.title.toLowerCase()} tasks</p>
-                        </div>
-                      )}
-                    </div>
+      {/* Kanban Board - Temporarily simplified without drag-and-drop */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {statusColumns.map((column) => {
+          const columnTasks = getTasksByStatus(column.id);
+          return (
+            <div
+              key={column.id}
+              className={`p-4 rounded-lg border-2 border-dashed min-h-[400px] ${column.color}`}
+            >
+              <h4 className="font-semibold mb-4 text-center">
+                {column.title} ({columnTasks.length})
+              </h4>
+              <div className="space-y-3">
+                {columnTasks.map((task) => (
+                  <Suspense fallback={<SkeletonTask key={task._id} />}>
+                    <TaskCard task={{ ...task, projectId }} />
+                  </Suspense>
+                ))}
+                {columnTasks.length === 0 && (
+                  <div className="text-center py-8 text-gray-400">
+                    <p className="text-sm">No {column.title.toLowerCase()} tasks</p>
                   </div>
                 )}
-              </Droppable>
-            );
-          })}
-        </div>
-      </DragDropContext>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
       {tasks.length === 0 && (
         <div className="text-center py-12">

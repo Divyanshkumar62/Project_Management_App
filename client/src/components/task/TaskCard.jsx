@@ -1,267 +1,158 @@
-import React, { useContext, useState } from "react";
-import { TaskContext } from "../../context/TaskContext";
-import { ProjectContext } from "../../context/ProjectContext";
-import TimeTracker from "./TimeTracker";
+import React, { useState, useEffect } from "react";
+import { useUpdateTaskStatus } from "../../hooks/useTasks";
+import { FaEdit, FaTrash, FaCalendar, FaUser } from "react-icons/fa";
 
-const TaskCard = ({ task }) => {
-  const { removeTaskById, updateTaskById } = useContext(TaskContext);
-  const { isProjectOwner } = useContext(ProjectContext);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [message, setMessage] = useState("");
-  const [showEditModal, setShowEditModal] = useState(false);
-
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await removeTaskById(task._id);
-      setMessage("Task deleted successfully!");
-      setShowDeleteModal(false);
-    } catch (error) {
-      setMessage("Failed to delete task. Please try again.");
-      console.error("Error deleting task:", error);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority?.toLowerCase()) {
-      case 'high': return 'bg-red-100 text-red-800 border-red-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Completed': return 'bg-green-100 text-green-800';
-      case 'In Progress': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  return (
-    <>
-      <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-        <div className="flex justify-between items-start mb-2">
-          <h4 className="font-medium text-gray-900 flex-1">{task.title}</h4>
-          <div className="flex gap-2">
-            {task.priority && (
-              <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityColor(task.priority)}`}>
-                {task.priority}
-              </span>
-            )}
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
-              {task.status}
-            </span>
-          </div>
-        </div>
-        
-        {task.description && (
-          <p className="text-gray-600 text-sm mb-3 line-clamp-2">{task.description}</p>
-        )}
-        
-        <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
-          {task.dueDate && (
-            <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
-          )}
-          <span>Created: {new Date(task.createdAt).toLocaleDateString()}</span>
-        </div>
-
-        {message && (
-          <div className={`text-sm p-2 rounded mb-3 ${
-            message.includes('successfully') 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-red-100 text-red-800'
-          }`}>
-            {message}
-          </div>
-        )}
-
-        <div className="flex justify-between mt-4">
-          {/* Only show edit button to project members and owners */}
-          {true && (
-            <button
-              onClick={() => setShowEditModal(true)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm transition-colors"
-              disabled={isDeleting}
-            >
-              Edit
-            </button>
-          )}
-
-          {/* Only show delete button to project owners */}
-          {isProjectOwner(task.projectId) && (
-            <button
-              onClick={() => setShowDeleteModal(true)}
-              disabled={isDeleting}
-              className={`px-3 py-1 rounded text-white text-sm transition-colors ${
-                isDeleting
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-red-500 hover:bg-red-600"
-              }`}
-            >
-              Delete
-            </button>
-          )}
-        </div>
-
-        {/* Time Tracker Component */}
-        <div className="mt-4 border-t pt-4">
-          <TimeTracker taskId={task._id} projectId={task.projectId || task.project} />
-        </div>
-      </div>
-
-      {/* Edit Task Modal */}
-      {showEditModal && (
-        <EditTaskModal
-          task={task}
-          onClose={() => setShowEditModal(false)}
-          onUpdate={updateTaskById}
-        />
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-            <h3 className="text-lg font-semibold mb-4 text-red-600">Delete Task</h3>
-            <p className="text-gray-700 mb-6">
-              Are you sure you want to delete this task? This action cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="flex-1 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-              >
-                {isDeleting ? 'Deleting...' : 'Delete Task'}
-              </button>
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-};
-
-// Simple Edit Task Modal Component
-const EditTaskModal = ({ task, onClose, onUpdate }) => {
-  const [formData, setFormData] = useState({
-    title: task.title,
-    description: task.description || '',
-    priority: task.priority || 'Medium',
-    status: task.status || 'To Do',
-    dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : ''
-  });
+const TaskCard = ({ task, projectId, onEdit, onDelete }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [localTask, setLocalTask] = useState(task); // Local state for optimistic updates
+  const updateTaskStatusMutation = useUpdateTaskStatus();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Update local task when props change
+  useEffect(() => {
+    setLocalTask(task);
+  }, [task]);
+
+  // Extract projectId from task.project if not provided as prop
+  const effectiveProjectId = projectId || task?.project?._id || task?.project;
+
+  const statusColors = {
+    "To Do": "bg-gray-100 text-gray-800",
+    "In Progress": "bg-blue-100 text-blue-800",
+    "Completed": "bg-green-100 text-green-800"
+  };
+
+  const statusOptions = ["To Do", "In Progress", "Completed"];
+
+  const priorityColors = {
+    "Low": "text-green-600",
+    "Medium": "text-yellow-600",
+    "High": "text-red-600"
+  };
+
+  const handleStatusChange = async (newStatus) => {
+    if (newStatus === task.status) return;
+
+    // Optimistic update - update local state immediately
+    setLocalTask(prev => ({ ...prev, status: newStatus }));
     setIsUpdating(true);
+
     try {
-      await onUpdate(task.projectId, task._id, formData);
-      onClose();
+      await updateTaskStatusMutation.mutateAsync({
+        projectId: effectiveProjectId,
+        taskId: task._id,
+        status: newStatus
+      });
+      // Success - local state is already updated
     } catch (error) {
-      console.error('Error updating task:', error);
-      alert('Failed to update task. Please try again.');
+      console.error("Failed to update task status:", error);
+      // Revert optimistic update on failure
+      setLocalTask(task);
+      // TODO: Add error notification here
     } finally {
       setIsUpdating(false);
     }
   };
 
+  const getDaysUntilDue = () => {
+    if (!task.dueDate) return null;
+    const now = new Date();
+    const dueDate = new Date(task.dueDate);
+    const diffTime = dueDate - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return { text: `${Math.abs(diffDays)} days overdue`, color: "text-red-600", urgent: true };
+    if (diffDays === 0) return { text: "Due today", color: "text-orange-600", urgent: true };
+    if (diffDays <= 3) return { text: `${diffDays} days left`, color: "text-yellow-600", urgent: true };
+    if (diffDays <= 7) return { text: `${diffDays} days left`, color: "text-blue-600", urgent: false };
+    return { text: `${diffDays} days left`, color: "text-gray-600", urgent: false };
+  };
+
+  const dueDateInfo = getDaysUntilDue();
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-        <h3 className="text-lg font-semibold mb-4">Edit Task</h3>
-        
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Title *</label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
+    <div className={`bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow ${
+      task.priority === 'High' ? 'border-l-4 border-l-red-500' :
+      task.priority === 'Medium' ? 'border-l-4 border-l-yellow-500' :
+      'border-l-4 border-l-green-500'
+    }`}>
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="font-semibold text-gray-900 leading-tight">{task.title}</h3>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${priorityColors[task.priority]} bg-opacity-20 ${task.priority === 'High' ? 'bg-red-100' : task.priority === 'Medium' ? 'bg-yellow-100' : 'bg-green-100'}`}>
+              {task.priority}
+            </span>
           </div>
-          
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              rows={3}
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-              <select
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <select
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="To Do">To Do</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Due Date</label>
-            <input
-              type="date"
-              value={formData.dueDate}
-              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={isUpdating}
-              className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50"
-            >
-              {isUpdating ? 'Updating...' : 'Update Task'}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+          {task.description && (
+            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 ml-3">
+          <button
+            onClick={() => onEdit && onEdit(task)}
+            className="text-gray-400 hover:text-blue-600 transition-colors"
+            title="Edit task"
+          >
+            <FaEdit size={14} />
+          </button>
+          <button
+            onClick={() => onDelete && onDelete(task)}
+            className="text-gray-400 hover:text-red-600 transition-colors"
+            title="Delete task"
+          >
+            <FaTrash size={14} />
+          </button>
+        </div>
       </div>
+
+      {/* Task Meta */}
+      <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+        {task.assignedTo && task.assignedTo.name && (
+          <div className="flex items-center gap-1">
+            <FaUser size={12} />
+            <span>{task.assignedTo.name}</span>
+          </div>
+        )}
+
+        {task.dueDate && (
+          <div className={`flex items-center gap-1 ${dueDateInfo?.color || 'text-gray-500'}`}>
+            <FaCalendar size={12} />
+            <span>{dueDateInfo?.text || new Date(task.dueDate).toLocaleDateString()}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Status Selector */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</span>
+          <select
+            value={localTask.status}
+            onChange={(e) => handleStatusChange(e.target.value)}
+            disabled={isUpdating}
+            className={`px-3 py-1 rounded-full text-xs font-medium border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${statusColors[localTask.status]} ${
+              isUpdating ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            {statusOptions.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="text-xs text-gray-400">
+          {task.createdAt && `Created ${new Date(task.createdAt).toLocaleDateString()}`}
+        </div>
+      </div>
+
+      {/* Loading overlay during status update */}
+      {isUpdating && (
+        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
+          <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+        </div>
+      )}
     </div>
   );
 };

@@ -10,6 +10,7 @@ const {
   createTask,
   fetchUserTasks,
   fetchTasks,
+  updateTaskStatus,
 } = require("../controllers/task.controller.js");
 
 router.post(
@@ -28,6 +29,7 @@ router.get("/user", auth, fetchUserTasks);
 router.get("/", auth, fetchTasks);
 router.get("/:taskId", auth, getTaskById);
 router.put("/:taskId", [auth, checkRole(["Admin", "Manager", "Owner"])], updateTask);
+router.put("/:taskId/status", auth, updateTaskStatus);
 router.delete("/:taskId", [auth, checkRole(["Admin", "Manager", "Owner"])], deleteTask);
 
 module.exports = router;

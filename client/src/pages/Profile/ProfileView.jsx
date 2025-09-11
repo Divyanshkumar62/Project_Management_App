@@ -5,6 +5,7 @@ import { AuthContext } from "../../context/AuthContext";
 import Sidebar from "../../components/dashboard/Sidebar";
 import { useProjects } from "../../hooks/useProjects";
 import { useUserTasks } from "../../hooks/useTasks";
+import api from "../../services/api";
 
 export default function ProfileView() {
   const { me, loading, error, loadMe, updateAvatar } = useProfile();
@@ -30,27 +31,19 @@ export default function ProfileView() {
 
     try {
       setUploading(true);
-      const response = await fetch('http://localhost:5001/api/users/me/avatar', {
-        method: 'PUT',
+      const response = await api.put('/users/me/avatar', formData, {
         headers: {
-          'Authorization': `Bearer ${auth.token}`,
+          'Content-Type': 'multipart/form-data',
         },
-        body: formData,
       });
 
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
       // Update user data in context immediately
-      const updatedUser = { ...auth.user, avatarUrl: data.avatarUrl };
+      const updatedUser = { ...auth.user, avatarUrl: response.data.avatarUrl };
       loginUser(auth.token, updatedUser);
-      
+
       // Update local state immediately
       await loadMe();
-      
+
       // Clear the input
       event.target.value = '';
     } catch (error) {

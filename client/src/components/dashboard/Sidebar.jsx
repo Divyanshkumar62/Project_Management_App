@@ -16,7 +16,11 @@ const Sidebar = () => {
 
   return (
     <div className="w-20 h-screen flex flex-col justify-between items-center py-4 bg-white shadow-sm">
-      <div className="text-blue-700 font-bold text-xl">PMW</div>
+      <img
+        className="w-12 h-auto mb-2"
+        src="/main-logo.png"
+        alt="Project Pilot Logo"
+      />
       <div className="text-gray-700 flex flex-col items-center justify-center gap-6">
         <span 
           className={`cursor-pointer transition-colors ${isActive('/dashboard') ? 'text-blue-700' : 'hover:text-blue-700'}`}

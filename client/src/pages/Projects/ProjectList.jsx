@@ -5,6 +5,7 @@ import { useProjects, useDeleteProject } from "../../hooks/useProjects";
 import Sidebar from "../../components/dashboard/Sidebar";
 import { useLocation } from "react-router-dom";
 import { useDebounce } from "../../hooks/useDebounce";
+import { SkeletonProjectCard } from "../../components/ui/SkeletonCard";
 
 const ProjectList = ({ searchQuery, sortBy: propSortBy, sortOrder: propSortOrder }) => {
   const location = useLocation();
@@ -95,6 +96,16 @@ const ProjectList = ({ searchQuery, sortBy: propSortBy, sortOrder: propSortOrder
   }
 
   if (isInDashboard) {
+    if (loading) {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <SkeletonProjectCard key={i} />
+          ))}
+        </div>
+      );
+    }
+
     return (
       <>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
