@@ -85,7 +85,7 @@ const updateAvatar = async (req, res) => {
     const protocol = req.protocol;
     const host = req.get('host');
     const baseUrl = process.env.BASE_URL || `${protocol}://${host}`;
-    user.avatarUrl = `${baseUrl}/uploads/avatars/${req.file.filename}`;
+    user.avatarUrl = `${baseUrl}/avatars/${req.file.filename}`;
     await user.save();
 
     res.json({ avatarUrl: user.avatarUrl });

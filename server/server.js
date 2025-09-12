@@ -49,6 +49,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Static file serving for uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Static file serving for avatars (ad blocker compatible)
+app.use('/avatars', express.static(path.join(__dirname, 'uploads/avatars')));
 
 // Routes Configuration
 app.use("/api/auth", authRoutes);
