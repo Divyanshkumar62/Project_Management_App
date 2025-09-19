@@ -82,73 +82,73 @@ const ProjectStats = () => {
   }
 
   return (
-    <aside className="bg-white p-6 m-3 rounded-xl shadow-lg flex flex-col border border-gray-100 h-fit max-h-screen">
-      <h1 className="text-xl font-bold text-gray-800 mb-6">Project Progress</h1>
+    <aside className="bg-white p-4 sm:p-6 m-2 sm:m-3 rounded-xl shadow-lg flex flex-col border border-gray-100 h-fit max-h-screen">
+      <h1 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-6 text-center lg:text-left">Project Progress</h1>
 
       {/* Error Messages */}
       {projectsError && (
-        <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm mb-4">
+        <div className="bg-red-100 border border-red-300 text-red-700 px-3 py-2 rounded-lg text-xs sm:text-sm mb-4">
           Projects Error: {projectsError.message}
         </div>
       )}
 
       {tasksError && (
-        <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded-lg text-sm mb-4">
+        <div className="bg-red-100 border border-red-300 text-red-700 px-3 py-2 rounded-lg text-xs sm:text-sm mb-4">
           Tasks Error: {tasksError.message}
         </div>
       )}
 
-      <div className="relative mb-6">
-        <div className="rounded-full bg-gradient-to-br from-blue-400 to-blue-600 w-36 h-36 flex justify-center items-center shadow-lg mx-auto">
-          <h1 className="text-3xl font-bold text-white">{completionPercentage}%</h1>
+      <div className="relative mb-4 sm:mb-6">
+        <div className="rounded-full bg-gradient-to-br from-blue-400 to-blue-600 w-24 h-24 sm:w-32 sm:h-32 lg:w-36 lg:h-36 flex justify-center items-center shadow-lg mx-auto">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">{completionPercentage}%</h1>
         </div>
       </div>
 
-      <div className="text-center mb-6">
-        <h3 className="font-semibold text-gray-800">{completedProjects} of {totalProjects} Projects</h3>
-        <p className="text-sm text-gray-600">{completedTasks} of {totalTasks} Tasks Done</p>
+      <div className="text-center mb-4 sm:mb-6">
+        <h3 className="font-semibold text-gray-800 text-sm sm:text-base">{completedProjects} of {totalProjects} Projects</h3>
+        <p className="text-xs sm:text-sm text-gray-600">{completedTasks} of {totalTasks} Tasks Done</p>
         {totalProjects === 0 && <p className="text-xs text-orange-600 mt-1">Create your first project to see data!</p>}
         {totalTasks === 0 && <p className="text-xs text-orange-600 mt-1">Create tasks to start tracking progress!</p>}
       </div>
       
       <div className="flex-1 flex flex-col min-h-0">
-        <h2 className="text-blue-700 text-lg font-medium mb-3 text-center">Current Tasks:</h2>
-        <div className="flex-1 overflow-y-auto scrollbar-hide space-y-2">
+        <h2 className="text-blue-700 text-base sm:text-lg font-medium mb-3 text-center">Current Tasks:</h2>
+        <div className="flex-1 overflow-y-auto scrollbar-hide space-y-2 max-h-32 sm:max-h-40 lg:max-h-none">
           {activeTasks.length > 0 ? (
             activeTasks.map((task) => (
-              <div key={task._id} className="bg-gray-50 p-3 rounded-lg border-l-4 border-blue-400">
-                <h3 className="font-medium text-sm text-gray-800 truncate">
+              <div key={task._id} className="bg-gray-50 p-2 sm:p-3 rounded-lg border-l-4 border-blue-400">
+                <h3 className="font-medium text-xs sm:text-sm text-gray-800 truncate">
                   {task.title}
                 </h3>
                 <p className="text-xs text-gray-500 capitalize">{task.priority} priority</p>
               </div>
             ))
           ) : (
-            <p className="text-gray-500 text-sm text-center py-4">No active tasks</p>
+            <p className="text-gray-500 text-xs sm:text-sm text-center py-4">No active tasks</p>
           )}
         </div>
       </div>
 
       {/* Recent Activity Feed */}
-      <div className="flex-1 flex flex-col min-h-0 mt-6">
-        <h2 className="text-blue-700 text-lg font-medium mb-3 text-center">Recent Activity</h2>
-        <div className="flex-1 overflow-y-auto scrollbar-hide space-y-2">
+      <div className="flex-1 flex flex-col min-h-0 mt-4 sm:mt-6">
+        <h2 className="text-blue-700 text-base sm:text-lg font-medium mb-3 text-center">Recent Activity</h2>
+        <div className="flex-1 overflow-y-auto scrollbar-hide space-y-2 max-h-32 sm:max-h-40 lg:max-h-none">
           {recentActivities.length > 0 ? (
             recentActivities.map((activity) => (
-              <div key={activity.id} className="bg-gray-50 p-3 rounded-lg border-l-4 border-green-400">
-                <h3 className="font-medium text-sm text-gray-800 truncate">
+              <div key={activity.id} className="bg-gray-50 p-2 sm:p-3 rounded-lg border-l-4 border-green-400">
+                <h3 className="font-medium text-xs sm:text-sm text-gray-800 truncate">
                   {activity.message}
                 </h3>
                 <div className="flex justify-between items-center text-xs text-gray-500 mt-1">
-                  <span className="truncate">{activity.project}</span>
-                  <span>{new Date(activity.timestamp).toLocaleTimeString()}</span>
+                  <span className="truncate flex-1 mr-2">{activity.project}</span>
+                  <span className="flex-shrink-0">{new Date(activity.timestamp).toLocaleTimeString()}</span>
                 </div>
               </div>
             ))
           ) : (
-            <div className="text-center py-6">
+            <div className="text-center py-4 sm:py-6">
               <div className="mb-3">
-                <div className="w-12 h-12 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-2">
+                <div className="w-8 h-8 sm:w-12 sm:h-12 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-2">
                   🔄
                 </div>
                 <p className="text-gray-500 text-xs">

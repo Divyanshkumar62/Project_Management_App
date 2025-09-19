@@ -15,53 +15,59 @@ const Sidebar = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <div className="w-20 h-screen flex flex-col justify-between items-center py-4 bg-white shadow-sm">
+    <div className="w-16 sm:w-20 h-screen flex flex-col justify-between items-center py-2 sm:py-4 bg-white shadow-sm">
       <img
-        className="w-12 h-auto mb-2"
+        className="w-8 sm:w-12 h-auto mb-2"
         src="/main-logo.png"
         alt="Project Pilot Logo"
       />
-      <div className="text-gray-700 flex flex-col items-center justify-center gap-6">
+      <div className="text-gray-700 flex flex-col items-center justify-center gap-4 sm:gap-6">
         <span 
-          className={`cursor-pointer transition-colors ${isActive('/dashboard') ? 'text-blue-700' : 'hover:text-blue-700'}`}
+          className={`cursor-pointer transition-colors p-2 rounded-lg hover:bg-blue-50 ${isActive('/dashboard') ? 'text-blue-700 bg-blue-50' : 'hover:text-blue-700'}`}
           onClick={() => navigate("/dashboard")}
+          title="Dashboard"
         >
-          <IoGridOutline size={30} />
+          <IoGridOutline size={24} className="sm:text-3xl" />
         </span>
         <span 
-          className={`cursor-pointer transition-colors ${isActive('/projects') ? 'text-blue-700' : 'hover:text-blue-700'}`}
+          className={`cursor-pointer transition-colors p-2 rounded-lg hover:bg-blue-50 ${isActive('/projects') ? 'text-blue-700 bg-blue-50' : 'hover:text-blue-700'}`}
           onClick={() => navigate("/projects")}
+          title="Projects"
         >
-          <FaDiagramProject size={30} />
+          <FaDiagramProject size={24} className="sm:text-3xl" />
         </span>
         <span 
-          className={`cursor-pointer transition-colors ${isActive('/templates') ? 'text-blue-700' : 'hover:text-blue-700'}`}
+          className={`cursor-pointer transition-colors p-2 rounded-lg hover:bg-blue-50 ${isActive('/templates') ? 'text-blue-700 bg-blue-50' : 'hover:text-blue-700'}`}
           onClick={() => navigate("/templates")}
+          title="Templates"
         >
-          <FaClipboardList size={30} />
+          <FaClipboardList size={24} className="sm:text-3xl" />
         </span>
         <span 
-          className={`cursor-pointer transition-colors ${isActive('/my-tasks') ? 'text-blue-700' : 'hover:text-blue-700'}`}
+          className={`cursor-pointer transition-colors p-2 rounded-lg hover:bg-blue-50 ${isActive('/my-tasks') ? 'text-blue-700 bg-blue-50' : 'hover:text-blue-700'}`}
           onClick={() => navigate("/my-tasks")}
+          title="My Tasks"
         >
-          <BsListTask size={30} />
+          <BsListTask size={24} className="sm:text-3xl" />
         </span>
         <span
-          className="cursor-pointer hover:text-red-600 transition-colors"
+          className="cursor-pointer hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50"
           onClick={() => {
             logoutUser();
             navigate("/login");
           }}
+          title="Logout"
         >
-          <TbLogout2 size={30} />
+          <TbLogout2 size={24} className="sm:text-3xl" />
         </span>
       </div>
       <div>
         <img
-          className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 cursor-pointer hover:border-blue-400 transition-colors"
+          className="w-8 h-8 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-gray-200 cursor-pointer hover:border-blue-400 transition-colors"
           src={auth.user?.avatarUrl || "/profile.jpg"}
           alt="Profile"
           onClick={() => navigate("/profile")}
+          title="Profile"
         />
       </div>
     </div>

@@ -108,7 +108,7 @@ const ProjectList = ({ searchQuery, sortBy: propSortBy, sortOrder: propSortOrder
 
     return (
       <>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {sortedProjects.length === 0 ? (
             <div className="col-span-full text-center py-8 text-gray-500">
               {finalSearchQuery ? "No projects found matching your search." : "No projects yet. Create your first project!"}
@@ -193,45 +193,50 @@ const ProjectList = ({ searchQuery, sortBy: propSortBy, sortOrder: propSortOrder
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar />
+      {/* Sidebar - Hidden on mobile */}
+      <div className="hidden lg:block">
+        <Sidebar />
+      </div>
       <div className="flex-1 overflow-auto">
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">My Projects</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">My Projects</h1>
             
             {/* Search and Sort Controls */}
-            <div className="flex flex-wrap gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-6">
               <input
                 type="text"
                 placeholder="Search projects..."
                 value={localSearch}
                 onChange={(e) => setLocalSearch(e.target.value)}
-                className="flex-1 min-w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 min-w-0 sm:min-w-64 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
               />
               
-              <select
-                value={localSortBy}
-                onChange={(e) => setLocalSortBy(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="createdAt">Date Created</option>
-                <option value="updatedAt">Last Updated</option>
-                <option value="title">Name</option>
-                <option value="status">Status</option>
-              </select>
-              
-              <select
-                value={localSortOrder}
-                onChange={(e) => setLocalSortOrder(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="desc">Newest First</option>
-                <option value="asc">Oldest First</option>
-              </select>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                <select
+                  value={localSortBy}
+                  onChange={(e) => setLocalSortBy(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                >
+                  <option value="createdAt">Date Created</option>
+                  <option value="updatedAt">Last Updated</option>
+                  <option value="title">Name</option>
+                  <option value="status">Status</option>
+                </select>
+                
+                <select
+                  value={localSortOrder}
+                  onChange={(e) => setLocalSortOrder(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                >
+                  <option value="desc">Newest First</option>
+                  <option value="asc">Oldest First</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {sortedProjects.length === 0 ? (
               <div className="col-span-full text-center py-12 text-gray-500">
                 {finalSearchQuery ? "No projects found matching your search." : "No projects yet. Create your first project!"}

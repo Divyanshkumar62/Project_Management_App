@@ -50,16 +50,16 @@ const LoginForm = () => {
   return (
     <form
       onSubmit={handleLogin}
-      className="w-96 border-2 text-lg shadow-2xl mx-auto mt-20 p-16 rounded-lg"
+      className="w-full max-w-sm sm:max-w-md border-2 text-base sm:text-lg shadow-2xl mx-auto mt-8 sm:mt-20 p-6 sm:p-16 rounded-lg"
     >
-      <h4 className="text-3xl mb-4 text-blue-700 font-medium text-center">
+      <h4 className="text-2xl sm:text-3xl mb-4 text-blue-700 font-medium text-center">
         Login
       </h4>
       <input
         type="text"
         name="email"
         placeholder="Email"
-        className=" w-full text-md text-slate-500 bg-zinc-300 py-3 mr-3 rounded-md outline-none border-[1.5px] px-5 mb-4"
+        className="w-full text-sm sm:text-md text-slate-500 bg-zinc-300 py-2 sm:py-3 mr-3 rounded-md outline-none border-[1.5px] px-3 sm:px-5 mb-4"
         value={formData.email}
         onChange={handleChange}
         required
@@ -73,7 +73,7 @@ const LoginForm = () => {
       {error && <p className="text-red-500 text-sm pb-1">{error}</p>}
       <button
         type="submit"
-        className="btn-primary bg-blue-700 px-2 py-2 rounded-md w-20 text-white text-center mt-2"
+        className="btn-primary bg-blue-700 px-4 sm:px-6 py-2 rounded-md w-full sm:w-auto text-white text-center mt-2 hover:bg-blue-800 transition-colors"
       >
         Login
       </button>

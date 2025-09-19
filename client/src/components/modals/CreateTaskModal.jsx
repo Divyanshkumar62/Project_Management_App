@@ -80,12 +80,12 @@ const CreateTaskModal = ({ projectId, closeModal }) => {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
       <div
         ref={modalRef}
-        className="bg-white p-6 rounded-md shadow-lg w-1/3 max-h-[90vh] overflow-y-auto"
+        className="bg-white p-4 sm:p-6 rounded-md shadow-lg w-full max-w-md sm:max-w-lg max-h-[90vh] overflow-y-auto"
       >
-        <h2 className="text-xl font-semibold mb-4">Create New Task</h2>
+        <h2 className="text-lg sm:text-xl font-semibold mb-4">Create New Task</h2>
         
         {message && (
           <div className={`mb-4 p-3 rounded ${
@@ -104,7 +104,7 @@ const CreateTaskModal = ({ projectId, closeModal }) => {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
               placeholder="Enter task title"
               required
             />
@@ -117,7 +117,7 @@ const CreateTaskModal = ({ projectId, closeModal }) => {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
               rows="3"
               placeholder="Enter task description"
             />
@@ -130,7 +130,7 @@ const CreateTaskModal = ({ projectId, closeModal }) => {
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
             >
               <option value="Low">Low</option>
               <option value="Medium">Medium</option>
@@ -146,7 +146,7 @@ const CreateTaskModal = ({ projectId, closeModal }) => {
               type="text"
               value={searchTerm}
               onChange={handleSearch}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
               placeholder="Search users to assign..."
             />
             
@@ -178,11 +178,11 @@ const CreateTaskModal = ({ projectId, closeModal }) => {
             )}
           </div>
 
-          <div className="flex justify-end space-x-3">
+          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
             <button
               type="button"
               onClick={closeModal}
-              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              className="w-full sm:w-auto px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
               disabled={isSubmitting}
             >
               Cancel
@@ -190,7 +190,7 @@ const CreateTaskModal = ({ projectId, closeModal }) => {
             <button
               type="submit"
               disabled={isSubmitting || !title.trim()}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
+              className="w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
             >
               {isSubmitting ? "Creating..." : "Create Task"}
             </button>
